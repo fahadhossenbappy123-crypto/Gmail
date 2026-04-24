@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Create Gmail Earn{% endblock %}
+
+{% block content %}
+<!-- Confirmation Modal -->
+<div id="submitConfirmModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border-l-4 border-red-600">
+        <div class="flex items-center gap-3 mb-4">
+            <i class="fa-solid fa-triangle-exclamation text-3xl text-red-600"></i>
+            <h3 class="text-2xl font-bold text-red-600">Warning!</h3>
+        </div>
+        
+        <div class="bg-red-50 p-4 rounded-2xl mb-6 border border-red-200">
+            <p class="text-gray-800 font-semibold mb-3">If you don't create the account and submit:</p>
+            <p class="text-red-700 font-bold text-lg">🚫 YOUR ACCOUNT WILL BE SUSPENDED!</p>
+        </div>
+
+        <p class="text-gray-700 mb-6 text-center font-semibold">Are you sure you want to create and submit this Gmail account?</p>
+
+        <div class="flex gap-4">
+            <button onclick="closeSubmitModal()" 
+                    class="flex-1 bg-gray-300 text-gray-800 font-semibold py-3 rounded-2xl hover:bg-gray-400 transition">
+                No, Cancel
+            </button>
+            <button onclick="proceedSubmit()" 
+                    class="flex-1 bg-green-600 text-white font-semibold py-3 rounded-2xl hover:bg-green-700 transition">
+                Yes, Create It
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-3xl shadow-xl p-8">
+        <h2 class="text-3xl font-bold mb-6">Create Gmail Earn</h2>
+        <p class="text-gray-700 mb-4">You can create a Gmail account and earn income based on the following Gmail Earn Price settings.</p>
+
+        <div class="bg-gradient-to-r from-indigo-100 to-blue-50 p-6 rounded-2xl border border-indigo-200 mb-6">
+            <h3 class="font-semibold text-xl mb-2">Step 1: Gmail Information</h3>
+            <p class="text-sm text-gray-600 mb-3">The fields below are readonly. Copy the values for use.</p>
+            <p class="text-sm text-gray-600 mb-3">Gmail Earn Price: ৳{{ price|round(3) }}</p>
+            <form id="gmailForm" action="{{ url_for('create_gmail_earn') }}" method="post" class="space-y-4">
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700" for="name">Name</label>
+                    <input id="name" name="name" type="text" value="{{ name }}" readonly class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100">
+                    <button type="button" onclick="copyToClipboard('name')" class="absolute right-2 top-9 px-2 py-1 text-xs bg-blue-500 text-white rounded">Copy</button>
+                </div>
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700" for="username">Username</label>
+                    <input id="username" name="username" type="text" value="{{ username }}" readonly class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100">
+                    <button type="button" onclick="copyToClipboard('username')" class="absolute right-2 top-9 px-2 py-1 text-xs bg-blue-500 text-white rounded">Copy</button>
+                </div>
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700" for="password">Password</label>
+                    <input id="password" name="password" type="text" value="{{ password }}" readonly class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100">
+                    <button type="button" onclick="copyToClipboard('password')" class="absolute right-2 top-9 px-2 py-1 text-xs bg-blue-500 text-white rounded">Copy</button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="showSubmitConfirm()" class="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold">Submit</button>
+                    <a href="{{ url_for('regenerate_gmail') }}" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">Change Create</a>
+                    <a href="{{ url_for('dashboard') }}" class="px-5 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">Cancel</a>
+                </div>
+            </form>
+        </div>
+
+        {% if pending_balance is not none %}
+        <div class="mb-4">
+            <span class="font-semibold">Pending Earnings:</span>
+            <span class="text-blue-600">৳{{ pending_balance|round(3) }}</span>
+        </div>
+        {% endif %}
+
+        {% if submitted %}
+        <div class="bg-blue-50 border border-blue-200 text-blue-700 p-4 rounded-xl mb-4">
+            <p class="font-semibold">Gmail account request submitted!</p>
+            <p>Name: {{ name }}</p>
+            <p>Username: {{ username }}</p>
+            <p>Password: {{ password }}</p>
+            <p>Requested amount pending admin approval: ৳{{ price|round(3) }}</p>
+        </div>
+        {% endif %}
+
+        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-indigo-700">
+            <p class="text-sm">After submitting, your Gmail account request will be recorded as pending. Admin will review and approve balance credit.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    navigator.clipboard.writeText(field.value).then(() => {
+        alert(fieldId + ' copied to clipboard');
+    }).catch(() => {
+        alert('Copy failed, please copy manually');
+    });
+}
+
+function showSubmitConfirm() {
+    document.getElementById('submitConfirmModal').classList.remove('hidden');
+}
+
+function closeSubmitModal() {
+    document.getElementById('submitConfirmModal').classList.add('hidden');
+}
+
+function proceedSubmit() {
+    document.getElementById('gmailForm').submit();
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('submitConfirmModal');
+    if (e.target === modal) {
+        closeSubmitModal();
+    }
+});
+
+// Allow ESC key to close modal
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSubmitModal();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+    <!-- Admin Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-800 text-white">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold"><i class="fas fa-shield-alt mr-2"></i>Admin Dashboard</h1>
+                <p class="text-red-100 mt-1">System Management & Analytics</p>
+            </div>
+            <a href="{{ url_for('admin_logout') }}" class="bg-white text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-red-50 transition">
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Users -->
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Total Users</p>
+                        <p class="text-3xl font-bold text-gray-800">{{ total_users }}</p>
+                    </div>
+                    <div class="bg-blue-100 rounded-full p-4">
+                        <i class="fas fa-users text-2xl text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Accounts -->
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Gmail Accounts</p>
+                        <p class="text-3xl font-bold text-gray-800">{{ total_accounts }}</p>
+                    </div>
+                    <div class="bg-green-100 rounded-full p-4">
+                        <i class="fas fa-envelope text-2xl text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Balance -->
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Pending Balance</p>
+                        <p class="text-3xl font-bold text-gray-800">৳{{ "%.2f"|format(total_pending) }}</p>
+                    </div>
+                    <div class="bg-yellow-100 rounded-full p-4">
+                        <i class="fas fa-hourglass-half text-2xl text-yellow-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral Earnings -->
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Referral Earnings</p>
+                        <p class="text-3xl font-bold text-gray-800">৳{{ "%.2f"|format(total_referral) }}</p>
+                    </div>
+                    <div class="bg-purple-100 rounded-full p-4">
+                        <i class="fas fa-gift text-2xl text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Status Overview -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Account Status Breakdown -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-chart-bar mr-2 text-red-600"></i>Account Status
+                </h2>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between pb-3 border-b">
+                        <span class="text-gray-700">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>Approved
+                        </span>
+                        <span class="text-2xl font-bold text-green-600">{{ approved_accounts }}</span>
+                    </div>
+                    <div class="flex items-center justify-between pb-3 border-b">
+                        <span class="text-gray-700">
+                            <i class="fas fa-clock text-yellow-500 mr-2"></i>Pending
+                        </span>
+                        <span class="text-2xl font-bold text-yellow-600">{{ pending_accounts }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-700">
+                            <i class="fas fa-times-circle text-red-500 mr-2"></i>Rejected
+                        </span>
+                        <span class="text-2xl font-bold text-red-600">{{ rejected_accounts }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-bolt mr-2 text-blue-600"></i>Quick Actions
+                </h2>
+                <div class="space-y-3">
+                    <a href="{{ url_for('admin_users') }}" class="block bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg text-center transition">
+                        <i class="fas fa-users mr-2"></i>Manage Users
+                    </a>
+                    <a href="{{ url_for('admin_accounts') }}" class="block bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg text-center transition">
+                        <i class="fas fa-envelope mr-2"></i>Review Accounts
+                    </a>
+                    <a href="{{ url_for('admin_view_withdrawals') }}" class="block bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-lg text-center transition">
+                        <i class="fas fa-money-bill-wave mr-2"></i>Withdrawals
+                    </a>
+                    <a href="{{ url_for('admin_gmail_price') }}" class="block bg-orange-600 hover:bg-orange-700 text-white p-3 rounded-lg text-center transition">
+                        <i class="fas fa-tag mr-2"></i>Gmail Price
+                    </a>
+                    <a href="{{ url_for('admin_referral_percentage') }}" class="block bg-red-600 hover:bg-red-700 text-white p-3 rounded-lg text-center transition">
+                        <i class="fas fa-percent mr-2"></i>Referral Share
+                    </a>
+                    <a href="{{ url_for('admin_import_from_sheets') }}" class="block bg-teal-600 hover:bg-teal-700 text-white p-3 rounded-lg text-center transition">
+                        <i class="fas fa-cloud-download-alt mr-2"></i>Import from Google Sheets
+                    </a>
+                    <button onclick="exportToGoogleSheets()" class="w-full block bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white p-3 rounded-lg text-center transition font-semibold">
+                        <i class="fas fa-cloud-upload-alt mr-2"></i>Export to Google Sheets
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-history mr-2 text-orange-600"></i>System Info
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div class="p-4 bg-gray-50 rounded">
+                    <p class="text-gray-600 text-sm">Avg Accounts per User</p>
+                    <p class="text-2xl font-bold text-gray-800">
+                        {% if total_users > 0 %}
+                            {{ "%.1f"|format(total_accounts / total_users) }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded">
+                    <p class="text-gray-600 text-sm">Approval Rate</p>
+                    <p class="text-2xl font-bold text-gray-800">
+                        {% if total_accounts > 0 %}
+                            {{ "%.1f"|format(approved_accounts / total_accounts * 100) }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded">
+                    <p class="text-gray-600 text-sm">Total Value</p>
+                    <p class="text-2xl font-bold text-gray-800">৳{{ "%.2f"|format(total_pending + total_referral) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function exportToGoogleSheets() {
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Uploading...';
+        
+        fetch('{{ url_for("admin_export_to_sheets") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            button.disabled = false;
+            button.innerHTML = originalText;
+            
+            if (data.success) {
+                alert(`✅ Successfully uploaded ${data.accounts_uploaded} accounts!\n\nSheet Link:\n${data.spreadsheet_url}`);
+                // Open the sheet in a new tab
+                window.open(data.spreadsheet_url, '_blank');
+            } else {
+                alert(`❌ Error: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            button.disabled = false;
+            button.innerHTML = originalText;
+            alert(`❌ Error: ${error.message}`);
+        });
+    }
+</script>
+{% endblock %}

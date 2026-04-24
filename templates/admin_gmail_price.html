@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Gmail Price Settings - Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+    <!-- Admin Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-800 text-white">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold"><i class="fas fa-tag mr-2"></i>Gmail Account Price</h1>
+                <p class="text-red-100 mt-1">Set the price for each Gmail account submission</p>
+            </div>
+            <a href="{{ url_for('admin_dashboard') }}" class="bg-white text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-red-50 transition">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        {% if message %}
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>{{ message }}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Price Settings -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-dollar-sign mr-2 text-green-600"></i>Price per Account
+                </h2>
+
+                <form method="POST" class="space-y-6">
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">Price Amount (USD)</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-3 text-2xl text-gray-400">৳</span>
+                            <input type="number" name="price" step="0.01" value="{{ "%.2f"|format(price) }}"
+                                   class="w-full pl-10 pr-4 py-3 text-2xl border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                   placeholder="5.00">
+                        </div>
+                        <p class="text-gray-600 text-sm mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>Users earn this amount when they submit a Gmail account
+                        </p>
+                    </div>
+
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition duration-200">
+                        <i class="fas fa-save mr-2"></i>Update Gmail Price
+                    </button>
+                </form>
+            </div>
+
+            <!-- Current Settings Info -->
+            <div class="bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-blue-900 mb-6">
+                    <i class="fas fa-info-circle mr-2"></i>Current Settings
+                </h2>
+
+                <div class="space-y-6">
+                    <div class="bg-white rounded-lg p-4">
+                        <p class="text-gray-600 text-sm mb-1">Current Price per Account</p>
+                        <p class="text-4xl font-bold text-green-600">৳{{ "%.2f"|format(price) }}</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-4">
+                        <p class="text-gray-600 text-sm mb-2">📊 Earnings Examples</p>
+                        <div class="text-sm text-gray-700 space-y-2 mt-2">
+                            <p><strong>1 account submitted:</strong></p>
+                            <p class="text-green-600 font-semibold">1 × ৳{{ "%.2f"|format(price) }} = ৳{{ "%.2f"|format(price) }}</p>
+                            
+                            <p class="mt-4"><strong>5 accounts submitted:</strong></p>
+                            <p class="text-green-600 font-semibold">5 × ৳{{ "%.2f"|format(price) }} = ৳{{ "%.2f"|format(price * 5) }}</p>
+                            
+                            <p class="mt-4"><strong>10 accounts submitted:</strong></p>
+                            <p class="text-green-600 font-semibold">10 × ৳{{ "%.2f"|format(price) }} = ৳{{ "%.2f"|format(price * 10) }}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-4">
+                        <p class="text-gray-600 text-sm mb-2">💡 Suggested Prices</p>
+                        <ul class="text-sm text-gray-700 space-y-2">
+                            <li class="flex justify-between">
+                                <span>Premium Quality</span>
+                                <span class="font-semibold">৳10.00</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span>Standard (Current)</span>
+                                <span class="font-semibold">৳{{ "%.2f"|format(price) }}</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span>Budget Friendly</span>
+                                <span class="font-semibold">৳3.00</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price History/Impact -->
+        <div class="mt-8 bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-chart-bar mr-2 text-blue-600"></i>Price Impact Analysis
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="border-l-4 border-green-500 pl-4 py-2">
+                    <p class="text-gray-600 text-sm">If increased to</p>
+                    <p class="text-2xl font-bold text-green-600">৳{{ "%.2f"|format(price + 2) }}</p>
+                    <p class="text-xs text-gray-500 mt-1">+৳2.00 increase</p>
+                </div>
+
+                <div class="border-l-4 border-blue-500 pl-4 py-2">
+                    <p class="text-gray-600 text-sm">If decreased to</p>
+                    <p class="text-2xl font-bold text-blue-600">৳{{ "%.2f"|format([price - 1, 0]|max) }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{% if price > 1 %}-৳1.00 decrease{% else %}Cannot go lower{% endif %}</p>
+                </div>
+
+                <div class="border-l-4 border-orange-500 pl-4 py-2">
+                    <p class="text-gray-600 text-sm">At 50 accounts</p>
+                    <p class="text-2xl font-bold text-orange-600">৳{{ "%.2f"|format(price * 50) }}</p>
+                    <p class="text-xs text-gray-500 mt-1">50 × ৳{{ "%.2f"|format(price) }}</p>
+                </div>
+
+                <div class="border-l-4 border-purple-500 pl-4 py-2">
+                    <p class="text-gray-600 text-sm">At 100 accounts</p>
+                    <p class="text-2xl font-bold text-purple-600">৳{{ "%.2f"|format(price * 100) }}</p>
+                    <p class="text-xs text-gray-500 mt-1">100 × ৳{{ "%.2f"|format(price) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Important Notes -->
+        <div class="mt-8 bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded">
+            <div class="flex">
+                <i class="fas fa-exclamation-triangle text-yellow-600 mr-4 text-xl"></i>
+                <div>
+                    <h3 class="font-bold text-yellow-800 mb-2">Important Notes</h3>
+                    <ul class="text-yellow-700 text-sm space-y-1 list-disc list-inside">
+                        <li>Price change only affects NEW accounts submitted after the change</li>
+                        <li>Existing pending balances won't be recalculated automatically</li>
+                        <li>You can manually adjust user balances from User Details page</li>
+                        <li>Minimum recommended: ৳1.00 | Maximum recommended: ৳20.00</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strategy Guide -->
+        <div class="mt-8 bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-lightbulb mr-2 text-yellow-600"></i>Pricing Strategy Tips
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 border border-gray-200 rounded">
+                    <h3 class="font-bold text-gray-800 mb-2">🚀 Attract More Users</h3>
+                    <p class="text-gray-600 text-sm">Decrease price (e.g., ৳3-4) to attract more submissions. Higher volume = higher total revenue.</p>
+                </div>
+
+                <div class="p-4 border border-gray-200 rounded">
+                    <h3 class="font-bold text-gray-800 mb-2">💎 Premium Quality</h3>
+                    <p class="text-gray-600 text-sm">Increase price (e.g., ৳8-10) to attract serious, quality contributors. Lower volume but higher per-submission.</p>
+                </div>
+
+                <div class="p-4 border border-gray-200 rounded">
+                    <h3 class="font-bold text-gray-800 mb-2">📈 Seasonal Adjustment</h3>
+                    <p class="text-gray-600 text-sm">Increase price during peak seasons, decrease during slow periods to maintain consistent submissions.</p>
+                </div>
+
+                <div class="p-4 border border-gray-200 rounded">
+                    <h3 class="font-bold text-gray-800 mb-2">🎯 A/B Testing</h3>
+                    <p class="text-gray-600 text-sm">Test different prices (৳4, ৳5, ৳6) to find the sweet spot for your market.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

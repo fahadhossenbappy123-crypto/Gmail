@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}User Details - Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+    <!-- Admin Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-800 text-white">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold"><i class="fas fa-user mr-2"></i>User Details</h1>
+                <p class="text-red-100 mt-1">{{ user.email }}</p>
+            </div>
+            <a href="{{ url_for('admin_users') }}" class="bg-white text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-red-50 transition">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- User Info -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- User Profile Card -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-id-card mr-2 text-blue-600"></i>User Profile
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-gray-600 text-sm">Email</p>
+                        <p class="text-lg font-semibold text-gray-800">{{ user.email }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600 text-sm">User ID</p>
+                        <p class="text-sm font-mono text-gray-800">{{ user.id }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600 text-sm">Referral Code</p>
+                        <p class="text-lg font-bold text-purple-600">{{ user.referral_code }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600 text-sm">Joined</p>
+                        <p class="text-gray-800">{{ user.created_at }}</p>
+                    </div>
+                    {% if user.referred_by %}
+                    <div>
+                        <p class="text-gray-600 text-sm">Referred By</p>
+                        <p class="text-gray-800 font-mono text-sm">{{ user.referred_by[:8] }}...</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Statistics Card -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-chart-pie mr-2 text-green-600"></i>Statistics
+                </h2>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center pb-4 border-b">
+                        <span class="text-gray-600">Gmail Accounts</span>
+                        <span class="text-2xl font-bold text-blue-600">{{ accounts|length }}</span>
+                    </div>
+                    <div class="flex justify-between items-center pb-4 border-b">
+                        <span class="text-gray-600">Pending Balance</span>
+                        <span class="text-2xl font-bold text-yellow-600">৳{{ "%.2f"|format(pending_balance) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center pb-4 border-b">
+                        <span class="text-gray-600">Referral Balance</span>
+                        <span class="text-2xl font-bold text-purple-600">৳{{ "%.2f"|format(referral_balance) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Active Referrals</span>
+                        <span class="text-2xl font-bold text-pink-600">{{ referral_count }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Balance Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Edit Pending Balance -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-edit mr-2 text-yellow-600"></i>Edit Pending Balance
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Current Balance</label>
+                        <div class="text-3xl font-bold text-yellow-600">৳{{ "%.2f"|format(pending_balance) }}</div>
+                    </div>
+                    <div>
+                        <label for="pending_balance" class="block text-gray-700 font-medium mb-2">New Balance</label>
+                        <input type="number" id="pending_balance" step="0.01" value="{{ "%.2f"|format(pending_balance) }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                    </div>
+                    <button onclick="updatePendingBalance('{{ user.id }}')" 
+                            class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-lg transition">
+                        <i class="fas fa-save mr-2"></i>Update Balance
+                    </button>
+                </div>
+            </div>
+
+            <!-- Edit Referral Balance -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-edit mr-2 text-purple-600"></i>Edit Referral Balance
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Current Balance</label>
+                        <div class="text-3xl font-bold text-purple-600">৳{{ "%.2f"|format(referral_balance) }}</div>
+                    </div>
+                    <div>
+                        <label for="referral_balance" class="block text-gray-700 font-medium mb-2">New Balance</label>
+                        <input type="number" id="referral_balance" step="0.01" value="{{ "%.2f"|format(referral_balance) }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <button onclick="updateReferralBalance('{{ user.id }}')" 
+                            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg transition">
+                        <i class="fas fa-save mr-2"></i>Update Balance
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gmail Accounts Section -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-envelope mr-2 text-blue-600"></i>Gmail Accounts ({{ accounts|length }})
+            </h2>
+            {% if accounts %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Name</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Username</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Price</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Status</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for account in accounts %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-gray-900">{{ account.name }}</td>
+                            <td class="px-4 py-3 text-gray-600 font-mono text-sm">{{ account.username }}</td>
+                            <td class="px-4 py-3 font-semibold text-green-600">৳{{ "%.2f"|format(account.price) }}</td>
+                            <td class="px-4 py-3">
+                                {% if account.status == 'approved' %}
+                                    <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                                        <i class="fas fa-check-circle mr-1"></i>Approved
+                                    </span>
+                                {% elif account.status == 'pending' %}
+                                    <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                                        <i class="fas fa-clock mr-1"></i>Pending
+                                    </span>
+                                {% else %}
+                                    <span class="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+                                        <i class="fas fa-times-circle mr-1"></i>Rejected
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-gray-600 text-sm">{{ account.created_at[:10] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-600 text-center py-8">No accounts submitted yet</p>
+            {% endif %}
+        </div>
+
+        <!-- Referrals Section -->
+        {% if referrals %}
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-gift mr-2 text-pink-600"></i>Referrals ({{ referral_count }})
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Email</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Referral Code</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Joined</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Accounts</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for referral in referrals %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-gray-900">{{ referral.email }}</td>
+                            <td class="px-4 py-3 text-purple-600 font-semibold">{{ referral.referral_code }}</td>
+                            <td class="px-4 py-3 text-gray-600 text-sm">{{ referral.created_at[:10] }}</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                                    {{ (gmail_accounts|selectattr('user_id', 'equalto', referral.id)|list)|length }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function updatePendingBalance(userId) {
+    const newBalance = document.getElementById('pending_balance').value;
+    
+    fetch(`/admin/api/user/${userId}/balance`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ balance: newBalance })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Pending balance updated successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function updateReferralBalance(userId) {
+    const newBalance = document.getElementById('referral_balance').value;
+    
+    fetch(`/admin/api/user/${userId}/referral-balance`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ balance: newBalance })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Referral balance updated successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}

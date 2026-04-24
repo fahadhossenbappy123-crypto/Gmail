@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}My Withdrawals{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 md:px-0">
+    <div class="bg-white rounded-3xl shadow-xl p-4 md:p-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6 md:mb-8">
+            <h2 class="text-2xl md:text-3xl font-bold">My Withdrawals</h2>
+            <a href="{{ url_for('create_withdrawal') }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition w-full md:w-auto text-center text-sm md:text-base">
+                <i class="fa-solid fa-plus mr-2"></i>New Withdrawal
+            </a>
+        </div>
+
+        {% if withdrawals %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-100 border-b-2 border-gray-300">
+                        <tr>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-semibold text-gray-700">Date</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-semibold text-gray-700">Amount</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-semibold text-gray-700">bKash Number</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-semibold text-gray-700">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for withdrawal in withdrawals %}
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-2 md:px-4 py-3 text-xs md:text-sm text-gray-600">
+                                    {{ withdrawal.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                </td>
+                                <td class="px-2 md:px-4 py-3 text-xs md:text-sm font-semibold text-gray-900">
+                                    ৳{{ withdrawal.amount|round(2) }}
+                                </td>
+                                <td class="px-2 md:px-4 py-3 text-xs md:text-sm text-gray-600 font-mono break-all">
+                                    {{ withdrawal.bkash_number }}
+                                </td>
+                                <td class="px-2 md:px-4 py-3 text-xs md:text-sm">
+                                    {% if withdrawal.status == 'pending' %}
+                                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-block">
+                                            <i class="fa-solid fa-clock mr-1"></i>Pending
+                                        </span>
+                                    {% elif withdrawal.status == 'completed' %}
+                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-block">
+                                            <i class="fa-solid fa-check mr-1"></i>Completed
+                                        </span>
+                                    {% elif withdrawal.status == 'rejected' %}
+                                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-block">
+                                            <i class="fa-solid fa-times mr-1"></i>Rejected
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <i class="fa-solid fa-inbox text-4xl text-gray-300 mb-4 block"></i>
+                <p class="text-gray-500 mb-4">No withdrawals yet</p>
+                <a href="{{ url_for('create_withdrawal') }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition inline-block">
+                    <i class="fa-solid fa-plus mr-2"></i>Request Your First Withdrawal
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Gmail Earn{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Welcome Section -->
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl shadow-xl p-8 mb-8 text-white">
+        <h1 class="text-4xl font-bold mb-2">Welcome to Gmail Earn! 👋</h1>
+        <p class="text-lg text-indigo-100">Create Gmail accounts and earn real money. Start your journey today!</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <!-- Total Accounts -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-blue-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold">Total Accounts</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ accounts|length }}</p>
+                </div>
+                <div class="text-4xl text-blue-500">
+                    <i class="fas fa-envelope"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Balance -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-yellow-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold">Pending</p>
+                    <p class="text-3xl font-bold text-gray-800">৳{{ "%.2f"|format(pending_balance if pending_balance else 0) }}</p>
+                </div>
+                <div class="text-4xl text-yellow-500">
+                    <i class="fas fa-hourglass-end"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Balance (Approved) -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-green-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold">Main Balance</p>
+                    <p class="text-3xl font-bold text-gray-800">৳{{ "%.2f"|format(main_balance if main_balance else 0) }}</p>
+                </div>
+                <div class="text-4xl text-green-500">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Referral Balance -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-purple-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold">Referral</p>
+                    <p class="text-3xl font-bold text-gray-800">৳{{ "%.2f"|format(referral_balance if referral_balance else 0) }}</p>
+                </div>
+                <div class="text-4xl text-purple-500">
+                    <i class="fas fa-share-alt"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Balance -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-indigo-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-semibold">Total Balance</p>
+                    <p class="text-3xl font-bold text-gray-800">৳{{ "%.2f"|format((main_balance if main_balance else 0) + (referral_balance if referral_balance else 0)) }}</p>
+                </div>
+                <div class="text-4xl text-indigo-500">
+                    <i class="fas fa-wallet"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral Promotion Section -->
+    <div class="bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-3xl shadow-xl p-8 mb-8 text-white">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex-1">
+                <h2 class="text-3xl font-bold mb-3">
+                    <i class="fas fa-share-alt mr-2"></i> Earn Extra with Referrals!
+                </h2>
+                <p class="text-lg text-gray-100 mb-4">Share your referral code with friends and earn bonus rewards based on referral activity.</p>
+                <div class="flex gap-3 flex-wrap">
+                    <a href="{{ url_for('referrals') }}" class="px-6 py-3 bg-white text-purple-600 font-bold rounded-lg hover:shadow-lg transition">
+                        <i class="fas fa-link"></i> View Referrals
+                    </a>
+                    <button onclick="copyCode('{{ referral_code }}')" class="px-6 py-3 bg-purple-700 text-white font-bold rounded-lg hover:bg-purple-800 transition">
+                        <i class="fas fa-copy"></i> Copy Code
+                    </button>
+                </div>
+            </div>
+            <div class="text-6xl opacity-20">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mb-8">
+        <a href="{{ url_for('create_gmail_earn') }}" 
+           class="inline-block px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold hover:shadow-lg transition transform hover:scale-105">
+            <i class="fas fa-plus-circle"></i> Create New Gmail Account
+        </a>
+    </div>
+
+    <!-- Recent Accounts -->
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">
+            <i class="fas fa-list text-indigo-600"></i> Your Gmail Accounts
+        </h2>
+
+        {% if accounts %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-gray-300 bg-gray-50">
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">#</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Name</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Username</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Amount</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for account in accounts %}
+                        <tr class="border-b hover:bg-gray-50 transition">
+                            <td class="py-3 px-4 text-gray-700 font-semibold">{{ loop.index }}</td>
+                            <td class="py-3 px-4 text-gray-700">{{ account.name }}</td>
+                            <td class="py-3 px-4 text-gray-700 font-mono">{{ account.username }}</td>
+                            <td class="py-3 px-4 font-bold text-green-600">৳{{ "%.2f"|format(account.price) }}</td>
+                            <td class="py-3 px-4">
+                                {% if account.status == 'pending' %}
+                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">
+                                        <i class="fas fa-clock"></i> Pending
+                                    </span>
+                                {% elif account.status == 'approved' %}
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+                                        <i class="fas fa-check"></i> Approved
+                                    </span>
+                                {% else %}
+                                    <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
+                                        <i class="fas fa-times"></i> Rejected
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-gray-600 text-sm">
+                                {{ account.created_at.split('T')[0] }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="text-6xl text-gray-300 mb-4">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <p class="text-gray-600 text-lg mb-6">No Gmail accounts created yet.</p>
+                <a href="{{ url_for('create_gmail_earn') }}" 
+                   class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                    Create Your First Account
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Information Section -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-6">
+            <h3 class="font-bold text-lg text-blue-900 mb-3">
+                <i class="fas fa-lightbulb text-blue-600"></i> How It Works
+            </h3>
+            <ul class="text-blue-800 space-y-2 text-sm">
+                <li>✅ Click "Create New Gmail Account"</li>
+                <li>✅ Copy the credentials provided</li>
+                <li>✅ Create the Gmail account</li>
+                <li>✅ Submit the request</li>
+                <li>✅ Earn money after admin approval!</li>
+            </ul>
+        </div>
+
+        <div class="bg-purple-50 border-l-4 border-purple-500 rounded-xl p-6">
+            <h3 class="font-bold text-lg text-purple-900 mb-3">
+                <i class="fas fa-star text-purple-600"></i> Earn More Tips
+            </h3>
+            <ul class="text-purple-800 space-y-2 text-sm">
+                <li>💡 Complete profile = Higher earnings</li>
+                <li>💡 Refer friends = Bonus rewards</li>
+                <li>💡 Regular submissions = VIP status</li>
+                <li>💡 Quality accounts = Priority approvals</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Copy referral code
+    function copyCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            alert('Referral code copied to clipboard!');
+        }).catch(() => {
+            alert('Failed to copy');
+        });
+    }
+
+    // Refresh stats every 30 seconds
+    function refreshStats() {
+        fetch('{{ url_for("get_earnings") }}')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Stats updated:', data);
+            });
+    }
+
+    setInterval(refreshStats, 30000);
+</script>
+{% endblock %}

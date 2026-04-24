@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Request Withdrawal{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 md:px-0">
+    <div class="bg-white rounded-3xl shadow-xl p-4 md:p-8">
+        <h2 class="text-2xl md:text-3xl font-bold mb-2">Request Withdrawal</h2>
+        <p class="text-gray-600 mb-6">Withdraw your earnings to your bKash account</p>
+
+        <!-- Balance Display -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-lg border border-yellow-200">
+                <p class="text-gray-600 text-xs md:text-sm font-semibold uppercase tracking-wide mb-1">
+                    <i class="fas fa-hourglass-end text-yellow-600 mr-1"></i>Pending
+                </p>
+                <p class="text-lg md:text-xl font-bold text-yellow-700">৳{{ "%.2f"|format(pending_balance) }}</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                <p class="text-gray-600 text-xs md:text-sm font-semibold uppercase tracking-wide mb-1">
+                    <i class="fas fa-check-circle text-green-600 mr-1"></i>Main Balance
+                </p>
+                <p class="text-lg md:text-xl font-bold text-green-700">৳{{ "%.2f"|format(main_balance) }}</p>
+            </div>
+            
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                <p class="text-gray-600 text-xs md:text-sm font-semibold uppercase tracking-wide mb-1">
+                    <i class="fas fa-gift text-purple-600 mr-1"></i>Referral
+                </p>
+                <p class="text-lg md:text-xl font-bold text-purple-700">৳{{ "%.2f"|format(referral_balance) }}</p>
+            </div>
+            
+            <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 rounded-lg border border-indigo-200">
+                <p class="text-gray-600 text-xs md:text-sm font-semibold uppercase tracking-wide mb-1">
+                    <i class="fas fa-wallet text-indigo-600 mr-1"></i>Total
+                </p>
+                <p class="text-lg md:text-xl font-bold text-indigo-700">৳{{ "%.2f"|format(total_balance) }}</p>
+            </div>
+        </div>
+
+        {% if errors %}
+        <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6">
+            <p class="font-semibold mb-2"><i class="fas fa-exclamation-circle mr-2"></i>Error:</p>
+            <ul class="list-disc list-inside space-y-1">
+                {% for error in errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-6">
+            <!-- Withdrawal Amount -->
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Withdrawal Amount (৳)</label>
+                <input type="number" name="amount" step="0.01" min="0" placeholder="Enter amount" required
+                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                       value="{{ request.form.get('amount', '') }}">
+                <p class="text-gray-500 text-sm mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>Available: ৳{{ "%.2f"|format(total_balance) }}
+                </p>
+            </div>
+
+            <!-- bKash Number -->
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">bKash Number</label>
+                <input type="text" name="bkash_number" placeholder="01XXXXXXXXX (11 digits)" maxlength="11" 
+                       required pattern="[0-9]{11}"
+                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                       value="{{ request.form.get('bkash_number', '') }}">
+                <p class="text-gray-500 text-sm mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>Must be 11 digits (01XXXXXXXXX format)
+                </p>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex gap-4">
+                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition">
+                    <i class="fas fa-arrow-right mr-2"></i>Request Withdrawal
+                </button>
+                <a href="{{ url_for('view_withdrawals') }}" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 rounded-lg transition text-center">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+
+        <!-- Information Box -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-8">
+            <p class="text-blue-900 font-semibold mb-2">
+                <i class="fas fa-info-circle text-blue-600 mr-2"></i>Important Information
+            </p>
+            <ul class="text-blue-800 text-sm space-y-1 ml-4 list-disc">
+                <li>Withdrawals are processed within 24-48 hours</li>
+                <li>bKash number must be valid and active</li>
+                <li>Minimum withdrawal amount: ৳50</li>
+                <li>Maximum withdrawal per request: Your available balance</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

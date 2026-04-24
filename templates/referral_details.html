@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block title %}Referral Details - Gmail Earn{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl shadow-xl p-8 mb-8 text-white">
+        <h1 class="text-4xl font-bold mb-2">
+            <i class="fas fa-gift"></i> Referral Program
+        </h1>
+        <p class="text-lg text-purple-100">Earn unlimited commission by inviting friends!</p>
+    </div>
+
+    <!-- Your Code Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Referral Code Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-indigo-600">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-key text-indigo-600"></i> Your Referral Code
+            </h2>
+            
+            <div class="bg-gradient-to-br from-indigo-50 via-blue-50 to-indigo-100 rounded-2xl p-8 mb-6 text-center">
+                <p class="text-gray-600 text-sm mb-3 font-semibold">YOUR CODE</p>
+                <p class="text-5xl font-bold text-indigo-600 font-mono tracking-widest mb-2">
+                    {{ referral_code }}
+                </p>
+                <p class="text-gray-500 text-xs">Share this code with friends</p>
+            </div>
+
+            <div class="space-y-3">
+                <button 
+                    onclick="copyToClipboard('{{ referral_code }}')"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg transition font-bold flex items-center justify-center gap-2 shadow-lg"
+                >
+                    <i class="fas fa-copy"></i> Copy Code
+                </button>
+                <button 
+                    onclick="shareCode()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition font-bold flex items-center justify-center gap-2 shadow-lg"
+                >
+                    <i class="fas fa-share-alt"></i> Share Code
+                </button>
+            </div>
+        </div>
+
+        <!-- Referral Link Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-blue-600">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-link text-blue-600"></i> Referral Link
+            </h2>
+            
+            <div class="bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 rounded-2xl p-6 mb-6">
+                <p class="text-xs text-gray-600 mb-2 font-semibold">DIRECT INVITATION LINK</p>
+                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                    <p class="text-xs font-mono text-blue-600 break-all leading-relaxed">
+                        {{ referral_link }}
+                    </p>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Anyone who clicks this link will auto-fill the referral code</p>
+            </div>
+
+            <div class="space-y-3">
+                <button 
+                    onclick="copyToClipboard('{{ referral_link }}')"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition font-bold flex items-center justify-center gap-2 shadow-lg"
+                >
+                    <i class="fas fa-copy"></i> Copy Link
+                </button>
+                <button 
+                    onclick="shareLink()"
+                    class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-lg transition font-bold flex items-center justify-center gap-2 shadow-lg"
+                >
+                    <i class="fas fa-share"></i> Share Link
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Total Referrals -->
+        <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-xl p-6 border-t-4 border-green-600">
+            <h3 class="text-gray-600 text-sm font-bold uppercase tracking-wider mb-3">
+                <i class="fas fa-users text-green-600"></i> Total Referrals
+            </h3>
+            <p class="text-4xl font-bold text-green-600">{{ referral_count }}</p>
+            <p class="text-sm text-gray-600 mt-3">
+                {% if referral_count == 0 %}
+                    0 friends registered yet
+                {% elif referral_count == 1 %}
+                    1 friend has registered
+                {% else %}
+                    {{ referral_count }} friends have registered
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Referral Balance -->
+        <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl shadow-xl p-6 border-t-4 border-purple-600">
+            <h3 class="text-gray-600 text-sm font-bold uppercase tracking-wider mb-3">
+                <i class="fas fa-dollar-sign text-purple-600"></i> Referral Earnings
+            </h3>
+            <p class="text-4xl font-bold text-purple-600">৳{{ "%.2f"|format(referral_balance) }}</p>
+            <p class="text-sm text-gray-600 mt-3">
+                Earned from {{ referral_count }} referral{{ 's' if referral_count != 1 else '' }}
+            </p>
+        </div>
+
+        <!-- Bonus Info -->
+        <div class="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl shadow-xl p-6 border-t-4 border-orange-600">
+            <h3 class="text-gray-600 text-sm font-bold uppercase tracking-wider mb-3">
+                <i class="fas fa-gift text-orange-600"></i> Per Referral Bonus
+            </h3>
+            <p class="text-4xl font-bold text-orange-600">{{ "%.2f"|format(gmail_price * referral_percentage / 100) }}</p>
+            <p class="text-sm text-gray-600 mt-3">
+                {{ referral_percentage }}% of ৳{{ gmail_price }} per successful signup
+            </p>
+        </div>
+    </div>
+
+    <!-- How to Use -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-lightbulb text-yellow-500"></i> How to Use Your Referral Code
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Step 1 -->
+            <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 text-center">
+                <div class="bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 font-bold text-lg">
+                    1
+                </div>
+                <h3 class="font-bold text-gray-800 mb-2">Share Code</h3>
+                <p class="text-sm text-gray-600">
+                    Share your 5-digit referral code with friends via message, email, or social media
+                </p>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 text-center">
+                <div class="bg-green-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 font-bold text-lg">
+                    2
+                </div>
+                <h3 class="font-bold text-gray-800 mb-2">They Register</h3>
+                <p class="text-sm text-gray-600">
+                    They visit the register page and enter your code or click your referral link
+                </p>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 text-center">
+                <div class="bg-purple-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 font-bold text-lg">
+                    3
+                </div>
+                <h3 class="font-bold text-gray-800 mb-2">Automatic Bonus</h3>
+                <p class="text-sm text-gray-600">
+                    You instantly receive ৳1 credit when they successfully register
+                </p>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-xl p-6 text-center">
+                <div class="bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 font-bold text-lg">
+                    4
+                </div>
+                <h3 class="font-bold text-gray-800 mb-2">Withdraw</h3>
+                <p class="text-sm text-gray-600">
+                    Add your earnings to balance and withdraw anytime
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Benefits -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Why Refer -->
+        <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-xl p-8 border-l-4 border-green-600">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-check-circle text-green-600"></i> Why Share Your Code?
+            </h3>
+            <ul class="space-y-3">
+                <li class="flex gap-3">
+                    <span class="text-green-600 font-bold">✓</span>
+                    <span class="text-gray-700"><strong>Unlimited Earnings:</strong> No cap on how many friends you can refer</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-green-600 font-bold">✓</span>
+                    <span class="text-gray-700"><strong>Instant Bonus:</strong> ৳1 credit awarded immediately when they register</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-green-600 font-bold">✓</span>
+                    <span class="text-gray-700"><strong>Easy Sharing:</strong> Copy code or link with one click</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-green-600 font-bold">✓</span>
+                    <span class="text-gray-700"><strong>Track Progress:</strong> View all your referrals and earnings here</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-green-600 font-bold">✓</span>
+                    <span class="text-gray-700"><strong>No Limit:</strong> Help your friends earn too!</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Tips -->
+        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow-xl p-8 border-l-4 border-blue-600">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-star text-blue-600"></i> Tips for Maximum Referrals
+            </h3>
+            <ul class="space-y-3">
+                <li class="flex gap-3">
+                    <span class="text-blue-600 font-bold">💡</span>
+                    <span class="text-gray-700">Share with friends who want to earn extra money</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-blue-600 font-bold">💡</span>
+                    <span class="text-gray-700">Post your referral link on social media platforms</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-blue-600 font-bold">💡</span>
+                    <span class="text-gray-700">Tell them about the easy earning opportunity</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-blue-600 font-bold">💡</span>
+                    <span class="text-gray-700">Use the direct link for better conversion</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-blue-600 font-bold">💡</span>
+                    <span class="text-gray-700">Share with online communities interested in earning</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Referrals List -->
+    {% if referrals %}
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-list text-indigo-600"></i> Your Referrals List
+        </h2>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b-2 border-gray-300 bg-gray-50">
+                        <th class="text-left py-4 px-4 font-bold text-gray-700">#</th>
+                        <th class="text-left py-4 px-4 font-bold text-gray-700">Email</th>
+                        <th class="text-left py-4 px-4 font-bold text-gray-700">Registration Date</th>
+                        <th class="text-center py-4 px-4 font-bold text-gray-700">Earned</th>
+                        <th class="text-center py-4 px-4 font-bold text-gray-700">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for referral in referrals %}
+                    <tr class="border-b border-gray-200 hover:bg-blue-50 transition">
+                        <td class="py-4 px-4 font-bold text-gray-700">{{ loop.index }}</td>
+                        <td class="py-4 px-4">
+                            <span class="inline-flex items-center gap-2">
+                                <i class="fas fa-user-circle text-indigo-600"></i>
+                                <span class="font-medium text-gray-800">{{ referral.email }}</span>
+                            </span>
+                        </td>
+                        <td class="py-4 px-4 text-gray-600">
+                            <i class="fas fa-calendar-alt text-gray-400 mr-2"></i>
+                            {{ referral.created_at[:10] }}
+                        </td>
+                        <td class="py-4 px-4 text-center">
+                            <span class="font-bold text-green-600 text-lg">৳1.00</span>
+                        </td>
+                        <td class="py-4 px-4 text-center">
+                            <span class="inline-block bg-green-100 text-green-800 text-xs font-bold px-4 py-2 rounded-full">
+                                <i class="fas fa-check-circle mr-1"></i> Active
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-6 p-4 bg-green-50 border-l-4 border-green-600 rounded">
+            <p class="text-sm text-gray-700">
+                <i class="fas fa-info-circle text-green-600 mr-2"></i>
+                <strong>Total Earnings:</strong> ৳{{ "%.2f"|format(referral_balance) }} from {{ referral_count }} referral{{ 's' if referral_count != 1 else '' }}
+            </p>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+        <div class="text-center py-12">
+            <div class="mb-6">
+                <i class="fas fa-user-friends text-gray-300 text-6xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-2">No Referrals Yet</h3>
+            <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                Start sharing your referral code with friends to earn ৳1 for each successful registration!
+            </p>
+            
+            <div class="bg-blue-50 rounded-lg p-6 inline-block">
+                <p class="text-sm text-gray-700 mb-4">Your Referral Code:</p>
+                <p class="text-3xl font-bold text-indigo-600 font-mono mb-4">{{ referral_code }}</p>
+                <button 
+                    onclick="copyToClipboard('{{ referral_code }}')"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-bold transition"
+                >
+                    <i class="fas fa-copy mr-2"></i> Copy Now
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            showNotification('Copied to clipboard!');
+        }).catch(() => {
+            showNotification('Failed to copy');
+        });
+    }
+
+    function shareCode() {
+        const code = '{{ referral_code }}';
+        if (navigator.share) {
+            navigator.share({
+                title: 'Gmail Earn Referral',
+                text: `Join Gmail Earn using my referral code: ${code}`,
+                url: window.location.origin
+            }).catch(err => console.log('Share failed:', err));
+        } else {
+            copyToClipboard(code);
+            showNotification('Code copied! Share it with friends.');
+        }
+    }
+
+    function shareLink() {
+        const link = '{{ referral_link }}';
+        if (navigator.share) {
+            navigator.share({
+                title: 'Gmail Earn',
+                text: 'Join Gmail Earn and start earning money!',
+                url: link
+            }).catch(err => console.log('Share failed:', err));
+        } else {
+            copyToClipboard(link);
+            showNotification('Link copied! Share it with friends.');
+        }
+    }
+
+    function showNotification(message) {
+        // Create a simple toast notification
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-in-out;
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    }
+
+    // Add animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}

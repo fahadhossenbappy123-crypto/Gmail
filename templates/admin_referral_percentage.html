@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Referral Percentage Settings - Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+    <!-- Admin Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-800 text-white">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold"><i class="fas fa-percent mr-2"></i>Referral Earnings Share</h1>
+                <p class="text-red-100 mt-1">Set what % referrer earns when someone they referred submits an account</p>
+            </div>
+            <a href="{{ url_for('admin_dashboard') }}" class="bg-white text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-red-50 transition">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        {% if message %}
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>{{ message }}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Percentage Settings -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-share-alt mr-2 text-purple-600"></i>Referral Share Percentage
+                </h2>
+
+                <form method="POST" class="space-y-6">
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">Percentage of Earnings</label>
+                        <div class="relative">
+                            <span class="absolute right-4 top-3 text-2xl text-gray-400">%</span>
+                            <input type="number" name="percentage" step="0.1" min="0" max="100" value="{{ "%.1f"|format(percentage) }}"
+                                   class="w-full pl-4 pr-10 py-3 text-2xl border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                   placeholder="10">
+                        </div>
+                        <p class="text-gray-600 text-sm mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>Percentage of each account's value that referrer earns
+                        </p>
+                    </div>
+
+                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition duration-200">
+                        <i class="fas fa-save mr-2"></i>Update Referral Share
+                    </button>
+                </form>
+            </div>
+
+            <!-- Current Settings Info -->
+            <div class="bg-gradient-to-br from-purple-100 to-purple-50 rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-purple-900 mb-6">
+                    <i class="fas fa-info-circle mr-2"></i>Current Settings
+                </h2>
+
+                <div class="space-y-6">
+                    <div class="bg-white rounded-lg p-4">
+                        <p class="text-gray-600 text-sm mb-1">Referral Percentage</p>
+                        <p class="text-4xl font-bold text-purple-600">{{ "%.1f"|format(percentage) }}%</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-4">
+                        <p class="text-gray-600 text-sm mb-2">💰 Earnings Examples</p>
+                        <div class="text-sm text-gray-700 space-y-3 mt-2">
+                            <div class="border-b pb-2">
+                                <p><strong>Account worth ৳5.00</strong></p>
+                                <p class="text-purple-600 font-semibold">Referrer earns: ৳{{ "%.2f"|format(5 * percentage / 100) }}</p>
+                            </div>
+                            <div class="border-b pb-2">
+                                <p><strong>Account worth ৳10.00</strong></p>
+                                <p class="text-purple-600 font-semibold">Referrer earns: ৳{{ "%.2f"|format(10 * percentage / 100) }}</p>
+                            </div>
+                            <div>
+                                <p><strong>10 Referred Users × ৳5.00 (50 accounts total)</strong></p>
+                                <p class="text-purple-600 font-semibold">Total referral earnings: ৳{{ "%.2f"|format(5 * 50 * percentage / 100) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-4">
+                        <p class="text-gray-600 text-sm mb-2">📈 Recommended Range</p>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>Conservative: <span class="font-bold text-orange-600">5%</span></li>
+                            <li>Balanced: <span class="font-bold text-green-600">10-15%</span></li>
+                            <li>Aggressive: <span class="font-bold text-blue-600">20-25%</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="mt-8 bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-cogs mr-2 text-blue-600"></i>How Referral Earnings Work
+            </h2>
+
+            <div class="space-y-4">
+                <div class="flex gap-4 p-4 bg-blue-50 rounded">
+                    <div class="flex-shrink-0">
+                        <span class="flex items-center justify-center h-8 w-8 rounded-md bg-blue-600 text-white text-sm font-bold">1</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">User A refers User B</h3>
+                        <p class="text-gray-600 text-sm">User A shares their referral code with User B</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 p-4 bg-green-50 rounded">
+                    <div class="flex-shrink-0">
+                        <span class="flex items-center justify-center h-8 w-8 rounded-md bg-green-600 text-white text-sm font-bold">2</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">User B submits 5 Gmail accounts @ ৳5.00 each</h3>
+                        <p class="text-gray-600 text-sm">User B's accounts are pending approval (Total: ৳25.00)</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 p-4 bg-purple-50 rounded">
+                    <div class="flex-shrink-0">
+                        <span class="flex items-center justify-center h-8 w-8 rounded-md bg-purple-600 text-white text-sm font-bold">3</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Admin approves 4 accounts</h3>
+                        <p class="text-gray-600 text-sm">User B gets: ৳20.00 in pending earnings</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 p-4 bg-orange-50 rounded">
+                    <div class="flex-shrink-0">
+                        <span class="flex items-center justify-center h-8 w-8 rounded-md bg-orange-600 text-white text-sm font-bold">4</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">User A (referrer) automatically gets share</h3>
+                        <p class="text-gray-600 text-sm">User A gets: ৳20.00 × {{ "%.1f"|format(percentage) }}% = ৳{{ "%.2f"|format(20 * percentage / 100) }} in referral earnings 🎉</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="mt-8 bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-table mr-2 text-green-600"></i>Earnings Comparison at Different Percentages
+            </h2>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-gray-700 font-semibold">Scenario</th>
+                            <th class="px-4 py-2 text-right text-gray-700 font-semibold">At 5%</th>
+                            <th class="px-4 py-2 text-right text-gray-700 font-semibold">At 10%</th>
+                            <th class="px-4 py-2 text-right text-gray-700 font-semibold">At 15%</th>
+                            <th class="px-4 py-2 text-right text-gray-700 font-semibold">At 20%</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2 font-medium text-gray-800">1 referred user (1 account)</td>
+                            <td class="px-4 py-2 text-right text-gray-600">৳0.25</td>
+                            <td class="px-4 py-2 text-right text-gray-600">৳0.50</td>
+                            <td class="px-4 py-2 text-right text-gray-600">৳0.75</td>
+                            <td class="px-4 py-2 text-right text-gray-600">৳1.00</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2 font-medium text-gray-800">1 referred user (5 accounts)</td>
+                            <td class="px-4 py-2 text-right text-gray-600">৳1.25</td>
+                            <td class="px-4 py-2 text-right text-gray-600">৳2.50</td>
+                            <td class="px-4 py-2 text-right text-gray-600">৳3.75</td>
+                            <td class="px-4 py-2 text-right text-gray-600">৳5.00</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2 font-medium text-gray-800">5 referred users (5 accounts each)</td>
+                            <td class="px-4 py-2 text-right font-semibold text-orange-600">৳6.25</td>
+                            <td class="px-4 py-2 text-right font-semibold text-orange-600">৳12.50</td>
+                            <td class="px-4 py-2 text-right font-semibold text-orange-600">৳18.75</td>
+                            <td class="px-4 py-2 text-right font-semibold text-orange-600">৳25.00</td>
+                        </tr>
+                        <tr class="bg-green-50 hover:bg-green-100">
+                            <td class="px-4 py-2 font-bold text-green-800">10 referred users (10 accounts each)</td>
+                            <td class="px-4 py-2 text-right font-bold text-green-600">৳25.00</td>
+                            <td class="px-4 py-2 text-right font-bold text-green-600">৳50.00</td>
+                            <td class="px-4 py-2 text-right font-bold text-green-600">৳75.00</td>
+                            <td class="px-4 py-2 text-right font-bold text-green-600">৳100.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Important Notes -->
+        <div class="mt-8 bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded">
+            <div class="flex">
+                <i class="fas fa-exclamation-triangle text-yellow-600 mr-4 text-xl"></i>
+                <div>
+                    <h3 class="font-bold text-yellow-800 mb-2">Important Notes</h3>
+                    <ul class="text-yellow-700 text-sm space-y-1 list-disc list-inside">
+                        <li>Referral percentage is calculated from <strong>approved account value</strong></li>
+                        <li>Percentage change only applies to <strong>future approvals</strong></li>
+                        <li>Existing referral balances won't be recalculated automatically</li>
+                        <li>Referrer must exist (i.e., user was referred by someone)</li>
+                        <li>You can manually adjust referral balances from User Details page</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strategy Guide -->
+        <div class="mt-8 bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-lightbulb mr-2 text-yellow-600"></i>Referral Strategy Tips
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 border border-gray-200 rounded">
+                    <h3 class="font-bold text-gray-800 mb-2">📈 Viral Growth (20%)</h3>
+                    <p class="text-gray-600 text-sm">High percentage encourages referrals. Fast growth but higher costs.</p>
+                </div>
+
+                <div class="p-4 border border-gray-200 rounded">
+                    <h3 class="font-bold text-gray-800 mb-2">⚖️ Balanced (10-15%)</h3>
+                    <p class="text-gray-600 text-sm">Reasonable incentive without breaking the bank. Steady growth.</p>
+                </div>
+
+                <div class="p-4 border border-gray-200 rounded">
+                    <h3 class="font-bold text-gray-800 mb-2">💰 Cost-Effective (5%)</h3>
+                    <p class="text-gray-600 text-sm">Minimal referral costs. Focus on direct signups instead.</p>
+                </div>
+
+                <div class="p-4 border border-gray-200 rounded">
+                    <h3 class="font-bold text-gray-800 mb-2">🎯 Combine with Commission</h3>
+                    <p class="text-gray-600 text-sm">Use % for existing users + fixed amount for new referrals for maximum incentive.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

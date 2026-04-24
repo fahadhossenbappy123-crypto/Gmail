@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-download"></i> Import Gmail Accounts from Google Sheets
+                    </h3>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Success Message -->
+                    {% if success and result %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-check-circle"></i> Import Successful!
+                        </h5>
+                        <p class="mb-0">
+                            <strong>Imported:</strong> {{ result.imported_count }} out of {{ result.total_rows }} accounts
+                        </p>
+                        {% if result.errors %}
+                        <hr>
+                        <p class="mb-0"><strong>Errors:</strong></p>
+                        <ul class="mt-2 mb-0">
+                            {% for error in result.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+
+                    <!-- Error Message -->
+                    {% if error %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-circle"></i> Error
+                        </h5>
+                        <p class="mb-0">{{ error }}</p>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+
+                    <!-- Import Form -->
+                    <form method="POST" class="mt-4">
+                        <div class="mb-3">
+                            <label for="spreadsheet_id" class="form-label">
+                                <strong>Google Sheets ID</strong>
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="spreadsheet_id" 
+                                   name="spreadsheet_id" placeholder="Paste the Spreadsheet ID here"
+                                   value="{{ request.form.get('spreadsheet_id', '') }}" required>
+                            <small class="form-text text-muted d-block mt-2">
+                                <i class="fas fa-info-circle"></i> 
+                                You can find the Spreadsheet ID in the URL of your Google Sheet.<br>
+                                Example: <code>1Czkp_Yflqvd7zQMdZ6dUfAiD_wVexucfJz7ut8f-eVA</code>
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="sheet_name" class="form-label">
+                                <strong>Sheet Name</strong>
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="sheet_name" 
+                                   name="sheet_name" placeholder="Sheet1" value="Sheet1">
+                            <small class="form-text text-muted d-block mt-2">
+                                <i class="fas fa-info-circle"></i> 
+                                Default is "Sheet1". Change if your Gmail data is in a different sheet.
+                            </small>
+                        </div>
+
+                        <div class="alert alert-info mt-4">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle"></i> Expected Sheet Format
+                            </h6>
+                            <p class="mb-0">
+                                Your Google Sheet should have the following columns (starting from Row 1):
+                            </p>
+                            <table class="table table-sm mt-2 mb-0">
+                                <thead>
+                                    <tr class="bg-light">
+                                        <th>Column A</th>
+                                        <th>Column B</th>
+                                        <th>Column C</th>
+                                        <th>Column D</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>NAME</strong></td>
+                                        <td><strong>GMAIL</strong></td>
+                                        <td><strong>PASSWORD</strong></td>
+                                        <td><strong>SENDER_GMAIL</strong></td>
+                                    </tr>
+                                    <tr class="text-muted">
+                                        <td>John Doe</td>
+                                        <td>johndoe@gmail.com</td>
+                                        <td>p@ssw0rd123!</td>
+                                        <td>johndoe@gmail.com</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-upload"></i> Import Gmail Accounts
+                            </button>
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+
+                    <!-- Direct API Example -->
+                    <div class="mt-5 p-3 bg-light rounded">
+                        <h6 class="text-muted">
+                            <i class="fas fa-code"></i> API Usage
+                        </h6>
+                        <small class="text-muted">
+                            You can also import via API POST request:<br>
+                            <code>/admin/api/import-sheets</code>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control-lg {
+        font-size: 1rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .alert {
+        border-radius: 0.5rem;
+    }
+
+    .card {
+        border: none;
+        border-radius: 0.5rem;
+    }
+
+    code {
+        background-color: #f4f4f4;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}

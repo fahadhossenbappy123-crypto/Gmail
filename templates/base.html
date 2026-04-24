@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gmail Earn{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar a {
+            transition: all 0.3s ease;
+        }
+        
+        .navbar a:hover {
+            color: #667eea;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="max-w-7xl mx-auto px-4 py-5 flex justify-between items-center">
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <i class="fas fa-envelope text-white text-2xl"></i>
+                <a href="{{ url_for('home') if not session.get('user_id') else url_for('dashboard') }}" class="text-white text-xl font-bold">Gmail Earn</a>
+            </div>
+            
+            <!-- If User is Logged In -->
+            {% if session.get('user_id') %}
+            <div class="flex gap-4 md:gap-6 items-center flex-wrap md:flex-nowrap">
+                <!-- Navigation Links -->
+                <div class="hidden md:flex gap-4 lg:gap-6">
+                    <a href="{{ url_for('dashboard') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('create_gmail_earn') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
+                        <i class="fas fa-plus"></i> Create
+                    </a>
+                    <a href="{{ url_for('view_accounts') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
+                        <i class="fas fa-list"></i> Accounts
+                    </a>
+                    <a href="{{ url_for('referrals') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
+                        <i class="fas fa-share-alt"></i> Referrals
+                    </a>
+                    <a href="{{ url_for('view_withdrawals') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
+                        <i class="fas fa-money-bill-wave"></i> Withdrawals
+                    </a>
+                </div>
+
+                <!-- Balance Display (Compact) -->
+                <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg px-3 py-2 flex items-center gap-2 shadow-lg">
+                    <i class="fas fa-wallet text-white text-lg"></i>
+                    <div>
+                        <p class="text-white text-xs font-bold leading-none">Main Balance</p>
+                        <p class="text-white text-sm font-bold leading-none">
+                            ৳{{ "%.2f"|format(main_balance if main_balance else 0) }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Withdraw Button (Compact) -->
+                <a href="{{ url_for('create_withdrawal') }}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 md:px-4 rounded-lg transition transform hover:scale-105 shadow-md text-sm inline-block">
+                    <i class="fas fa-arrow-down"></i> Withdraw
+                </a>
+
+                <!-- Referral Button (NEW) -->
+                <a href="{{ url_for('referrals') }}" 
+                   class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 md:px-4 rounded-lg transition transform hover:scale-105 shadow-md text-sm">
+                    <i class="fas fa-gift"></i> Refer & Earn
+                </a>
+
+                <!-- Profile Dropdown -->
+                <div class="relative group">
+                    <button class="bg-gray-700 hover:bg-gray-600 text-white rounded-full w-10 h-10 flex items-center justify-center transition shadow-md">
+                        <i class="fas fa-user text-lg"></i>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl hidden group-hover:block z-50 border border-gray-700">
+                        <div class="px-4 py-3 border-b border-gray-700">
+                            <p class="text-white font-semibold text-sm">
+                                <i class="fas fa-envelope text-blue-400"></i> {{ session.get('user_email', 'User') }}
+                            </p>
+                        </div>
+                        <a href="{{ url_for('dashboard') }}" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition">
+                            <i class="fas fa-user-circle"></i> Profile
+                        </a>
+                        <a href="{{ url_for('referrals') }}" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition">
+                            <i class="fas fa-link text-yellow-400"></i> Referrals
+                        </a>
+                        <a href="javascript:alert('Settings coming soon!')" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <a href="javascript:alert('Help & Support coming soon!')" class="block px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition">
+                            <i class="fas fa-question-circle"></i> Help & Support
+                        </a>
+                        <div class="border-t border-gray-700">
+                            <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-red-400 hover:bg-gray-700 transition font-semibold">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- If User is NOT Logged In -->
+            {% else %}
+            <div class="flex gap-4 items-center">
+                <a href="{{ url_for('admin_login') }}" 
+                   class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition text-sm hidden sm:inline-block">
+                    <i class="fas fa-shield-alt"></i> Admin
+                </a>
+                <a href="{{ url_for('login') }}" 
+                   class="px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+                <a href="{{ url_for('register') }}" 
+                   class="px-6 py-2 bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold rounded-lg hover:shadow-lg transition transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-user-plus"></i> Register
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Admin Section (if admin logged in) -->
+            {% if session.get('admin_id') %}
+            <div class="absolute top-0 right-0 bg-red-600 text-white px-4 py-1 text-xs">
+                ADMIN MODE
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="py-8 px-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 text-center py-4 mt-12">
+        <p>&copy; 2026 Gmail Earn - All Rights Reserved | Earn by creating Gmail accounts</p>
+    </footer>
+</body>
+</html>
