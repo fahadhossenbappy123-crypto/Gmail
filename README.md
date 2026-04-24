@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Gmail Earn - Web Application
 
 একটি সম্পূর্ণ কার্যকারী Flask ওয়েব অ্যাপ্লিকেশন যেখানে ব্যবহারকারীরা Gmail অ্যাকাউন্ট তৈরি করে আয় করতে পারে।
@@ -335,3 +336,6 @@ pip install -r requirements.txt
 ---
 
 **Happy Coding! 🎉**
+=======
+# Gmail
+>>>>>>> 5f2222750b965c212456ae9627964f595bb61638
