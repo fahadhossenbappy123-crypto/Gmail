@@ -10,18 +10,23 @@ import os
 from google.oauth2.service_account import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+from config import DevelopmentConfig, ProductionConfig
+from database import db
 
+# Initialize Flask app with proper configuration
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-change-this'
 
-# Mock database
-users = []
-gmail_accounts = []
-pending_earnings = {}  # Money pending approval from admin
-main_earnings = {}  # Money approved and ready to withdraw
-referral_earnings = {}  # Track referral commission earnings
-withdrawals = []  # Track withdrawal requests
-sheets_spreadsheet_id = None  # Store Google Sheets spreadsheet ID
+# Load configuration
+env = os.getenv('FLASK_ENV', 'development')
+config = ProductionConfig if env == 'production' else DevelopmentConfig
+app.config.from_object(config)
+
+# Initialize SQLAlchemy with the app
+db.init_app(app)
+
+# Mock database [REMOVED - Now using PostgreSQL via SQLAlchemy]
+# NOTE: All data is now stored in PostgreSQL database via SQLAlchemy ORM
+# users, gmail_accounts, earnings, withdrawals tables are in the PostgreSQL database
 
 # Admin account
 ADMIN_EMAIL = 'admin@gmail.com'
@@ -31,9 +36,10 @@ REFERRAL_PERCENTAGE = 10  # Default 10% of earnings to referrer
 
 def generate_referral_code():
     """Generate unique 5-digit referral code"""
+    from database import User
     code = ''.join(random.choices(string.digits, k=5))
-    # Check if code already exists
-    while any(user.get('referral_code') == code for user in users):
+    # Check if code already exists in database
+    while User.query.filter_by(referral_code=code).first():
         code = ''.join(random.choices(string.digits, k=5))
     return code
 
@@ -87,25 +93,22 @@ def is_email_valid(email):
     return re.match(pattern, email) is not None
 
 def find_user_by_email(email):
-    """Find user by email"""
-    for user in users:
-        if user['email'].lower() == email.lower():
-            return user
-    return None
+    """Find user by email from database"""
+    from database import User
+    user = User.query.filter_by(email=email.lower()).first()
+    return user
 
 def find_user_by_id(user_id):
-    """Find user by ID"""
-    for user in users:
-        if user['id'] == user_id:
-            return user
-    return None
+    """Find user by ID from database"""
+    from database import User
+    user = User.query.get(user_id)
+    return user
 
 def find_user_by_referral_code(code):
-    """Find user by referral code"""
-    for user in users:
-        if user.get('referral_code') == code:
-            return user
-    return None
+    """Find user by referral code from database"""
+    from database import User
+    user = User.query.filter_by(referral_code=code).first()
+    return user
 
 # Google Sheets Integration
 def get_sheets_service():
@@ -486,23 +489,32 @@ def register():
         if errors:
             return render_template('register.html', errors=errors, email=email, referral_code=ref_code, referral_error=referral_error)
         
-        # Create new user
-        new_user = {
-            'id': str(uuid.uuid4()),
-            'email': email,
-            'password': generate_password_hash(password),
-            'referral_code': generate_referral_code(),
-            'referred_by': referrer['id'] if referrer else None,
-            'created_at': datetime.now().isoformat()
-        }
-        users.append(new_user)
+        # Create new user in database
+        from database import User
         
-        # Add instant ৳10 bonus to referrer's referral balance
+        referrer_id = referrer.id if referrer else None
+        new_user = User(
+            email=email.lower(),
+            password_hash=generate_password_hash(password),
+            name=email.split('@')[0],  # Use email username as default name
+            referral_code=generate_referral_code(),
+            referred_by=referrer_id
+        )
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        # Add instant ৳10 bonus to referrer if referral exists
         if referrer:
-            referrer_id = referrer['id']
-            if referrer_id not in referral_earnings:
-                referral_earnings[referrer_id] = 0
-            referral_earnings[referrer_id] += 10  # Instant ৳10 bonus
+            from database import Earnings
+            bonus_earning = Earnings(
+                user_id=referrer.id,
+                amount=10.0,
+                type='referral',
+                status='approved'
+            )
+            db.session.add(bonus_earning)
+            db.session.commit()
         
         # Note: Referral earnings (percentage) will be calculated when accounts are approved
         # Based on REFERRAL_PERCENTAGE setting (percentage of approved account value)
@@ -520,12 +532,12 @@ def login():
         
         user = find_user_by_email(email)
         
-        if not user or not check_password_hash(user['password'], password):
+        if not user or not check_password_hash(user.password_hash, password):
             return render_template('login.html', error='Invalid email or password')
         
         # Set session
-        session['user_id'] = user['id']
-        session['user_email'] = user['email']
+        session['user_id'] = user.id
+        session['user_email'] = user.email
         session.modified = True
         
         return redirect(url_for('dashboard'))
@@ -558,6 +570,41 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# Helper functions for earnings calculation from database
+def get_user_earnings(user_id):
+    """Get all earnings for a user from database"""
+    from database import Earnings
+    earnings = Earnings.query.filter_by(user_id=user_id).all()
+    pending = sum(e.amount for e in earnings if e.status == 'pending')
+    approved = sum(e.amount for e in earnings if e.status == 'approved')
+    withdrawn = sum(e.amount for e in earnings if e.status == 'withdrawn')
+    return {
+        'pending': pending,
+        'approved': approved,
+        'withdrawn': withdrawn,
+        'total': pending + approved + withdrawn
+    }
+
+def get_referral_earnings(user_id):
+    """Get referral earnings for a user from database"""
+    from database import Earnings
+    earnings = Earnings.query.filter_by(user_id=user_id, type='referral').all()
+    pending = sum(e.amount for e in earnings if e.status == 'pending')
+    approved = sum(e.amount for e in earnings if e.status == 'approved')
+    withdrawn = sum(e.amount for e in earnings if e.status == 'withdrawn')
+    return {
+        'pending': pending,
+        'approved': approved,
+        'withdrawn': withdrawn,
+        'total': pending + approved + withdrawn
+    }
+
+def get_user_gmail_accounts(user_id):
+    """Get all Gmail accounts for a user from database"""
+    from database import GmailAccount
+    accounts = GmailAccount.query.filter_by(user_id=user_id).all()
+    return accounts
+
 @app.route('/')
 def home():
     """Home page"""
@@ -573,21 +620,24 @@ def dashboard():
     user_email = session.get('user_email')
     user = find_user_by_id(user_id)
     
-    user_accounts = [acc for acc in gmail_accounts if acc['user_id'] == user_id]
-    user_pending = pending_earnings.get(user_id, 0)
-    user_main = main_earnings.get(user_id, 0)
-    referral_balance = referral_earnings.get(user_id, 0)
+    # Get Gmail accounts from database
+    user_accounts = get_user_gmail_accounts(user_id)
     
-    # Count referrals
-    referral_count = sum(1 for u in users if u.get('referred_by') == user_id)
+    # Get earnings from database
+    earnings = get_user_earnings(user_id)
+    referral_earnings_data = get_referral_earnings(user_id)
+    
+    # Count referrals from database
+    from database import User
+    referral_count = User.query.filter_by(referred_by=user_id).count()
     
     return render_template('dashboard.html', 
                          accounts=user_accounts, 
-                         pending_balance=user_pending,
-                         main_balance=user_main,
+                         pending_balance=earnings['pending'],
+                         main_balance=earnings['approved'],
                          user_email=user_email,
-                         referral_code=user.get('referral_code') if user else '',
-                         referral_balance=referral_balance,
+                         referral_code=user.referral_code if user else '',
+                         referral_balance=referral_earnings_data['approved'],
                          referral_count=referral_count)
 
 @app.route('/main-dashboard')
