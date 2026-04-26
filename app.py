@@ -662,85 +662,60 @@ def referrals():
 
 @app.route('/api/approve/<account_id>', methods=['POST'])
 def approve_account(account_id):
-    """Admin endpoint to approve an account"""
-    for acc in gmail_accounts:
-        if acc['id'] == account_id:
-            acc['status'] = 'approved'
-            
-            # Move amount from pending to main earnings
-            user_id = acc['user_id']
-            price = acc['price']
-            
-            # Deduct from pending
-            if user_id in pending_earnings:
-                pending_earnings[user_id] -= price
-                if pending_earnings[user_id] < 0:
-                    pending_earnings[user_id] = 0
-            
-            # Add to main balance
-            if user_id not in main_earnings:
-                main_earnings[user_id] = 0
-            main_earnings[user_id] += price
-            
-            # Add referral commission to referrer's main balance
-            referrer_id = next((u['id'] for u in users if u['id'] == user_id and u.get('referred_by')), None)
-            if referrer_id:
-                referral_amount = (price * REFERRAL_PERCENTAGE) / 100
-                if referrer_id not in referral_earnings:
-                    referral_earnings[referrer_id] = 0
-                referral_earnings[referrer_id] += referral_amount
-            
-            return jsonify({'status': 'approved'})
-    
-    return jsonify({'error': 'Account not found'}), 404
+    """Admin endpoint to approve an account - DEPRECATED USE ADMIN ENDPOINT"""
+    return jsonify({'error': 'Use admin endpoint instead'}), 404
 
 @app.route('/accounts')
 @login_required
 def view_accounts():
     """View all submitted accounts"""
+    from database import GmailAccount
+    
     user_id = session.get('user_id')
     user_email = session.get('user_email')
     
-    user_accounts = [acc for acc in gmail_accounts if acc['user_id'] == user_id]
-    pending_balance = pending_earnings.get(user_id, 0)
-    main_balance = main_earnings.get(user_id, 0)
+    user_accounts = GmailAccount.query.filter_by(user_id=user_id).all()
+    earnings = get_user_earnings(user_id)
     
-    return render_template('accounts.html', accounts=user_accounts, user_email=user_email, pending_balance=pending_balance, main_balance=main_balance)
+    return render_template('accounts.html', accounts=user_accounts, user_email=user_email, 
+                         pending_balance=earnings['pending'], main_balance=earnings['approved'])
 
 @app.route('/withdrawals')
 @login_required
 def view_withdrawals():
     """View all withdrawal requests"""
+    from database import Withdrawal
+    
     user_id = session.get('user_id')
     user_email = session.get('user_email')
     
-    user_withdrawals = [w for w in withdrawals if w['user_id'] == user_id]
-    # Sort by created_at descending (newest first)
-    user_withdrawals.sort(key=lambda x: x['created_at'], reverse=True)
-    main_balance = main_earnings.get(user_id, 0)
+    user_withdrawals = Withdrawal.query.filter_by(user_id=user_id).order_by(Withdrawal.created_at.desc()).all()
+    earnings = get_user_earnings(user_id)
     
-    return render_template('my_withdrawals.html', withdrawals=user_withdrawals, user_email=user_email, main_balance=main_balance)
+    return render_template('my_withdrawals.html', withdrawals=user_withdrawals, user_email=user_email, 
+                         main_balance=earnings['approved'])
 
 @app.route('/withdraw', methods=['GET', 'POST'])
 @login_required
 def create_withdrawal():
     """Create withdrawal request"""
+    from database import Withdrawal
+    
     user_id = session.get('user_id')
-    user = find_user_by_id(user_id)
     user_email = session.get('user_email')
     
-    pending_balance = pending_earnings.get(user_id, 0)
-    main_balance = main_earnings.get(user_id, 0)
-    referral_balance = referral_earnings.get(user_id, 0)
+    earnings = get_user_earnings(user_id)
+    referral_earnings_data = get_referral_earnings(user_id)
+    
+    main_balance = earnings['approved']
+    referral_balance = referral_earnings_data['approved']
     total_balance = main_balance + referral_balance
     
     if request.method == 'POST':
         amount = request.form.get('amount', '0')
         bkash_number = request.form.get('bkash_number', '').strip()
         
-        # Validation
         errors = []
-        
         try:
             amount = float(amount)
         except ValueError:
@@ -749,45 +724,35 @@ def create_withdrawal():
         
         if amount <= 0:
             errors.append('Amount must be greater than 0')
-        
         if amount < 50:
             errors.append('Minimum withdrawal amount is ৳50')
-        
         if amount > total_balance:
             errors.append(f'Insufficient balance. Available: ৳{total_balance:.2f}')
-        
-        if not bkash_number:
-            errors.append('bKash number is required')
-        elif len(bkash_number) != 11 or not bkash_number.isdigit():
+        if not bkash_number or len(bkash_number) != 11 or not bkash_number.isdigit():
             errors.append('Invalid bKash number (must be 11 digits)')
         
         if errors:
-            return render_template('withdraw.html', errors=errors, pending_balance=pending_balance, 
+            return render_template('withdraw.html', errors=errors, main_balance=main_balance,
                                  referral_balance=referral_balance, total_balance=total_balance,
                                  user_email=user_email)
         
-        # Create withdrawal request
-        withdrawal = {
-            'id': str(uuid.uuid4()),
-            'user_id': user_id,
-            'amount': amount,
-            'bkash_number': bkash_number,
-            'status': 'pending',
-            'created_at': datetime.now()
-        }
-        withdrawals.append(withdrawal)
+        try:
+            withdrawal = Withdrawal(
+                user_id=user_id,
+                amount=amount
+            )
+            db.session.add(withdrawal)
+            db.session.commit()
+            
+            return render_template('withdraw_success.html', withdrawal=withdrawal, user_email=user_email)
         
-        # Deduct from balance (from main first, then referral)
-        deduct_amount = amount
-        if main_balance >= deduct_amount:
-            main_earnings[user_id] = main_balance - deduct_amount
-        else:
-            main_earnings[user_id] = 0
-            referral_earnings[user_id] = referral_balance - (deduct_amount - main_balance)
-        
-        return render_template('withdraw_success.html', withdrawal=withdrawal, user_email=user_email)
+        except Exception as e:
+            db.session.rollback()
+            return render_template('withdraw.html', errors=[f'Error: {str(e)[:100]}'],
+                                 main_balance=main_balance, referral_balance=referral_balance,
+                                 total_balance=total_balance, user_email=user_email)
     
-    return render_template('withdraw.html', pending_balance=pending_balance, main_balance=main_balance,
+    return render_template('withdraw.html', main_balance=main_balance,
                          referral_balance=referral_balance, total_balance=total_balance,
                          user_email=user_email)
 
