@@ -635,24 +635,21 @@ def regenerate_gmail():
 @app.route('/api/earnings')
 def get_earnings():
     """API endpoint to get user earnings"""
+    from database import GmailAccount
+
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({'error': 'Not authenticated'}), 401
-    
-    total_earnings = 0
-    user_accounts = [acc for acc in gmail_accounts if acc['user_id'] == user_id]
-    
-    for acc in user_accounts:
-        if acc['status'] == 'approved':
-            total_earnings += acc['price']
-    
-    pending_balance = pending_earnings.get(user_id, 0)
-    referral_balance = referral_earnings.get(user_id, 0)
-    
+
+    user_accounts = GmailAccount.query.filter_by(user_id=user_id).all()
+    total_earnings = sum(acc.price for acc in user_accounts if acc.status == 'approved')
+    earnings = get_user_earnings(user_id)
+    referral = get_referral_earnings(user_id)
+
     return jsonify({
         'total_earnings': total_earnings,
-        'pending_balance': pending_balance,
-        'referral_balance': referral_balance,
+        'pending_balance': earnings['pending'],
+        'referral_balance': referral['approved'],
         'total_accounts': len(user_accounts)
     })
 
@@ -844,33 +841,29 @@ def admin_dashboard():
 @admin_required
 def admin_users():
     """View all users"""
+    from database import User, GmailAccount, Earnings
+
     search = request.args.get('search', '').strip().lower()
     sort_by = request.args.get('sort', 'created_at')
-    
-    filtered_users = users
-    
-    # Search filter
+
+    query = User.query
     if search:
-        filtered_users = [u for u in users if search in u['email'].lower()]
-    
-    # Sort
+        query = query.filter(User.email.ilike(f'%{search}%'))
+
     if sort_by == 'email':
-        filtered_users = sorted(filtered_users, key=lambda x: x['email'])
-    elif sort_by == 'created_at':
-        filtered_users = sorted(filtered_users, key=lambda x: x['created_at'], reverse=True)
-    elif sort_by == 'referral_count':
-        filtered_users = sorted(filtered_users, 
-                               key=lambda x: len([u for u in users if u.get('referred_by') == x['id']]), 
-                               reverse=True)
-    
-    # Get user stats
+        query = query.order_by(User.email)
+    else:
+        query = query.order_by(User.created_at.desc())
+
+    users_list = query.all()
     user_stats = []
-    for user in filtered_users:
-        accounts = len([acc for acc in gmail_accounts if acc['user_id'] == user['id']])
-        pending = pending_earnings.get(user['id'], 0)
-        referral = referral_earnings.get(user['id'], 0)
-        referral_count = len([u for u in users if u.get('referred_by') == user['id']])
-        
+
+    for user in users_list:
+        accounts = GmailAccount.query.filter_by(user_id=user.id).count()
+        pending = db.session.query(db.func.sum(Earnings.amount)).filter_by(user_id=user.id, status='pending').scalar() or 0
+        referral = db.session.query(db.func.sum(Earnings.amount)).filter_by(user_id=user.id, type='referral', status='approved').scalar() or 0
+        referral_count = User.query.filter_by(referred_by=user.id).count()
+
         user_stats.append({
             'user': user,
             'accounts': accounts,
@@ -878,25 +871,43 @@ def admin_users():
             'referral': referral,
             'referral_count': referral_count
         })
-    
+
+    if sort_by == 'referral_count':
+        user_stats = sorted(user_stats, key=lambda x: x['referral_count'], reverse=True)
+
     return render_template('admin_users.html', user_stats=user_stats, search=search, sort_by=sort_by)
 
 @app.route('/admin/user/<user_id>')
 @admin_required
 def admin_user_detail(user_id):
     """View specific user details"""
+    from database import GmailAccount, Earnings, User
+
     user = find_user_by_id(user_id)
     if not user:
         return "User not found", 404
-    
-    user_accounts = [acc for acc in gmail_accounts if acc['user_id'] == user_id]
-    pending_balance = pending_earnings.get(user_id, 0)
-    referral_balance = referral_earnings.get(user_id, 0)
-    referral_count = len([u for u in users if u.get('referred_by') == user_id])
-    
+
+    db_accounts = GmailAccount.query.filter_by(user_id=user_id).all()
+    user_accounts = []
+    for acc in db_accounts:
+        username = acc.email.split('@')[0] if acc.email else ''
+        user_accounts.append({
+            'id': acc.id,
+            'user_id': acc.user_id,
+            'name': username,
+            'username': username,
+            'price': acc.price,
+            'status': acc.status,
+            'created_at': acc.created_at
+        })
+
+    pending_balance = db.session.query(db.func.sum(Earnings.amount)).filter_by(user_id=user_id, status='pending').scalar() or 0
+    referral_balance = db.session.query(db.func.sum(Earnings.amount)).filter_by(user_id=user_id, type='referral', status='approved').scalar() or 0
+    referral_count = User.query.filter_by(referred_by=user_id).count()
+
     # Get referrals list
-    referrals_list = [u for u in users if u.get('referred_by') == user_id]
-    
+    referrals_list = User.query.filter_by(referred_by=user_id).all()
+
     return render_template('admin_user_detail.html',
                          user=user,
                          accounts=user_accounts,
@@ -909,31 +920,59 @@ def admin_user_detail(user_id):
 @admin_required
 def admin_update_balance(user_id):
     """Update user's pending balance"""
+    from database import Earnings
+
     user = find_user_by_id(user_id)
     if not user:
         return jsonify({'error': 'User not found'}), 404
-    
+
     data = request.get_json()
     new_balance = float(data.get('balance', 0))
-    
-    pending_earnings[user_id] = new_balance
-    
-    return jsonify({'success': True, 'balance': new_balance})
+
+    try:
+        db.session.query(Earnings).filter_by(user_id=user_id, status='pending', type='sales').delete()
+        if new_balance > 0:
+            earning = Earnings(
+                user_id=user_id,
+                amount=new_balance,
+                type='sales',
+                status='pending'
+            )
+            db.session.add(earning)
+        db.session.commit()
+        return jsonify({'success': True, 'balance': new_balance})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/admin/api/user/<user_id>/referral-balance', methods=['POST'])
 @admin_required
 def admin_update_referral_balance(user_id):
     """Update user's referral balance"""
+    from database import Earnings
+
     user = find_user_by_id(user_id)
     if not user:
         return jsonify({'error': 'User not found'}), 404
-    
+
     data = request.get_json()
     new_balance = float(data.get('balance', 0))
-    
-    referral_earnings[user_id] = new_balance
-    
-    return jsonify({'success': True, 'balance': new_balance})
+
+    try:
+        db.session.query(Earnings).filter_by(user_id=user_id, status='approved', type='referral').delete()
+        if new_balance > 0:
+            earning = Earnings(
+                user_id=user_id,
+                amount=new_balance,
+                type='referral',
+                status='approved'
+            )
+            db.session.add(earning)
+        db.session.commit()
+        return jsonify({'success': True, 'balance': new_balance})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/admin/gmail-price', methods=['GET', 'POST'])
 @admin_required
@@ -969,31 +1008,38 @@ def admin_referral_percentage():
 @admin_required
 def admin_accounts():
     """View all Gmail accounts"""
+    from database import GmailAccount, User
+
     status_filter = request.args.get('status', 'all')
     search = request.args.get('search', '').strip().lower()
-    
-    filtered_accounts = gmail_accounts
-    
-    # Status filter
+
+    query = GmailAccount.query
     if status_filter != 'all':
-        filtered_accounts = [acc for acc in filtered_accounts if acc['status'] == status_filter]
-    
-    # Search filter
+        query = query.filter_by(status=status_filter)
+
+    accounts = query.all()
     if search:
-        filtered_accounts = [acc for acc in filtered_accounts 
-                            if search in acc['username'].lower() or search in acc['name'].lower()]
-    
-    # Get user info for each account
+        accounts = [acc for acc in accounts if search in (acc.email or '').lower()]
+
     accounts_with_user = []
-    for acc in filtered_accounts:
-        user = find_user_by_id(acc['user_id'])
+    for acc in accounts:
+        user = User.query.get(acc.user_id) if acc.user_id else None
+        username = acc.email.split('@')[0] if acc.email else ''
         accounts_with_user.append({
-            'account': acc,
-            'user_email': user['email'] if user else 'Unknown'
+            'account': {
+                'id': acc.id,
+                'user_id': acc.user_id,
+                'name': username,
+                'username': username,
+                'price': acc.price,
+                'status': acc.status,
+                'created_at': acc.created_at
+            },
+            'user_email': user.email if user else 'Unknown'
         })
-    
+
     accounts_with_user = sorted(accounts_with_user, key=lambda x: x['account']['created_at'], reverse=True)
-    
+
     return render_template('admin_accounts.html', 
                          accounts=accounts_with_user,
                          status_filter=status_filter,
@@ -1119,6 +1165,40 @@ def admin_import_from_sheets():
     
     except Exception as e:
         return render_template('admin_import_sheets.html', error=str(e))
+
+@app.route('/admin/export-to-sheets', methods=['POST'])
+@admin_required
+def admin_export_to_sheets():
+    """Admin export Gmail accounts to Google Sheets"""
+    from database import GmailAccount, User
+
+    try:
+        service = get_sheets_service()
+        if not service:
+            return jsonify({'error': 'Google Sheets API unavailable'}), 500
+
+        accounts = GmailAccount.query.all()
+        uploaded = 0
+        for account in accounts:
+            username = account.email.split('@')[0] if account.email else ''
+            user = User.query.get(account.user_id) if account.user_id else None
+            gmail_payload = {
+                'name': user.name if user else '',
+                'username': username,
+                'password': account.password or '',
+                'user_email': user.email if user else ''
+            }
+            result = save_gmail_to_google_sheet(gmail_payload)
+            if result.get('success'):
+                uploaded += 1
+            else:
+                print(f"⚠️ Could not export account {account.id}: {result.get('error')}")
+
+        spreadsheet_url = f"https://docs.google.com/spreadsheets/d/{SHEETS_SPREADSHEET_ID}"
+        return jsonify({'success': True, 'accounts_uploaded': uploaded, 'spreadsheet_url': spreadsheet_url})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
