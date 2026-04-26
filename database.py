@@ -16,6 +16,7 @@ class User(db.Model):
     name = db.Column(db.String(120), nullable=False)
     referral_code = db.Column(db.String(10), unique=True, nullable=False)
     referred_by = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
+    is_banned = db.Column(db.Boolean, default=False)  # Ban/suspend status
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

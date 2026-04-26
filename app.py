@@ -49,22 +49,29 @@ def migrate_database():
     try:
         from sqlalchemy import text, inspect
         
-        # Check if withdrawals table exists
         inspector = inspect(db.engine)
-        if 'withdrawals' not in inspector.get_table_names():
-            print("📋 Withdrawals table doesn't exist yet, will be created by db.create_all()")
-            return
         
-        # Check if bkash_number column exists in withdrawals table
-        columns = [col['name'] for col in inspector.get_columns('withdrawals')]
+        # Check if withdrawals table exists and add bkash_number column
+        if 'withdrawals' in inspector.get_table_names():
+            columns = [col['name'] for col in inspector.get_columns('withdrawals')]
+            
+            if 'bkash_number' not in columns:
+                print("🔄 Migrating: Adding bkash_number column to withdrawals table...")
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE withdrawals ADD COLUMN bkash_number VARCHAR(11) DEFAULT NULL'))
+                    conn.commit()
+                print("✅ Migration complete: bkash_number column added")
         
-        if 'bkash_number' not in columns:
-            print("🔄 Migrating: Adding bkash_number column to withdrawals table...")
-            with db.engine.connect() as conn:
-                # Add column with default value for existing records
-                conn.execute(text('ALTER TABLE withdrawals ADD COLUMN bkash_number VARCHAR(11) DEFAULT NULL'))
-                conn.commit()
-            print("✅ Migration complete: bkash_number column added")
+        # Check if users table exists and add is_banned column
+        if 'users' in inspector.get_table_names():
+            columns = [col['name'] for col in inspector.get_columns('users')]
+            
+            if 'is_banned' not in columns:
+                print("🔄 Migrating: Adding is_banned column to users table...")
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE users ADD COLUMN is_banned BOOLEAN DEFAULT FALSE'))
+                    conn.commit()
+                print("✅ Migration complete: is_banned column added")
     except Exception as e:
         print(f"Migration note: {e}")
         # Continue even if migration fails - might already exist
@@ -453,6 +460,10 @@ def login():
         
         if not user or not check_password_hash(user.password_hash, password):
             return render_template('login.html', error='Invalid email or password')
+        
+        # Check if user is banned
+        if user.is_banned:
+            return render_template('login.html', error='Your account has been suspended. Please contact support.')
         
         # Set session
         session['user_id'] = user.id
@@ -1017,6 +1028,37 @@ def admin_update_referral_balance(user_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/admin/api/user/<user_id>/ban', methods=['POST'])
+@admin_required
+def admin_toggle_ban(user_id):
+    """Ban/Unban a user"""
+    from database import User
+    
+    user = find_user_by_id(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    try:
+        data = request.get_json()
+        action = data.get('action', 'toggle')  # 'ban', 'unban', or 'toggle'
+        
+        if action == 'ban':
+            user.is_banned = True
+        elif action == 'unban':
+            user.is_banned = False
+        elif action == 'toggle':
+            user.is_banned = not user.is_banned
+        
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'is_banned': user.is_banned,
+            'message': f"User {'banned' if user.is_banned else 'unbanned'} successfully"
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/admin/gmail-price', methods=['GET', 'POST'])
 @admin_required
 def admin_gmail_price():
@@ -1026,7 +1068,7 @@ def admin_gmail_price():
     if request.method == 'POST':
         new_price = float(request.form.get('price', GMAIL_PRICE))
         GMAIL_PRICE = new_price
-        return render_template('admin_gmail_price.html', 
+        return render_template('admin_gmail_price.html',
                              price=GMAIL_PRICE,
                              message='Gmail price updated successfully!')
     
