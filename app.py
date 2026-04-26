@@ -44,12 +44,12 @@ def ensure_database_initialized():
 
 # Admin account
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@gmail.com')
-ADMIN_PASSWORD_HASH = os.getenv('ADMIN_PASSWORD', 'admin123')  # Use env variable
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')  # Use env variable
 GMAIL_PRICE = float(os.getenv('GMAIL_PRICE', '5.00'))
 REFERRAL_PERCENTAGE = float(os.getenv('REFERRAL_PERCENTAGE', '10'))
 
 # Google Sheets config
-SHEETS_CREDENTIALS_FILE = os.getenv('SHEETS_CREDENTIALS_FILE', 'rugged-nucleus-494309-h6-1e1f8ffafa43.json')
+SHEETS_CREDENTIALS_FILE = os.getenv('GOOGLE_SERVICE_ACCOUNT', 'rugged-nucleus-494309-h6-1e1f8ffafa43.json')
 SHEETS_SPREADSHEET_ID = os.getenv('SHEETS_SPREADSHEET_ID', '1Czkp_Yflqvd7zQMdZ6dUfAiD_wVexucfJz7ut8f-eVA')
 
 def generate_referral_code():
@@ -583,11 +583,15 @@ def create_gmail_earn():
             db.session.commit()
             
             # Try to save to Google Sheet
-            upload_gmail_to_sheets({
+            sheets_result = upload_gmail_to_sheets({
                 'name': credentials['name'],
                 'username': credentials['username'],
                 'password': credentials['password']
             })
+            
+            if sheets_result.get('error'):
+                print(f"⚠️ Warning: Failed to save to Google Sheets: {sheets_result['error']}")
+                # Continue anyway - account creation succeeded
             
             # Clear session
             session.pop('current_credentials', None)
@@ -791,7 +795,7 @@ def admin_login():
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '').strip()
         
-        if email == ADMIN_EMAIL and check_password_hash(ADMIN_PASSWORD_HASH, password):
+        if email == ADMIN_EMAIL and (password == ADMIN_PASSWORD or check_password_hash(ADMIN_PASSWORD, password)):
             session['admin_id'] = 'admin'
             session['admin_email'] = email
             session.modified = True
