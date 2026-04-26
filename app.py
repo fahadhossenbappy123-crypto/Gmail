@@ -547,9 +547,12 @@ def create_gmail_earn():
     user_email = session.get('user_email')
     
     if request.method == 'GET':
-        # Generate new credentials for display
-        credentials = generate_gmail_credentials()
-        session['current_credentials'] = credentials
+        # Only generate credentials if they don't exist in session
+        if 'current_credentials' not in session:
+            credentials = generate_gmail_credentials()
+            session['current_credentials'] = credentials
+        else:
+            credentials = session['current_credentials']
     
     else:  # POST request
         credentials = session.get('current_credentials', generate_gmail_credentials())
