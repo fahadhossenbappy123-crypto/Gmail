@@ -63,8 +63,8 @@
                         <span class="text-2xl font-bold text-blue-600">{{ accounts|length }}</span>
                     </div>
                     <div class="flex justify-between items-center pb-4 border-b">
-                        <span class="text-gray-600">Pending Balance</span>
-                        <span class="text-2xl font-bold text-yellow-600">৳{{ "%.2f"|format(pending_balance) }}</span>
+                        <span class="text-gray-600">Main Balance</span>
+                        <span class="text-2xl font-bold text-green-600">৳{{ "%.2f"|format(main_balance) }}</span>
                     </div>
                     <div class="flex justify-between items-center pb-4 border-b">
                         <span class="text-gray-600">Referral Balance</span>
@@ -79,24 +79,24 @@
         </div>
 
         <!-- Edit Balance Section -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <!-- Edit Pending Balance -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Edit Main Balance -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold text-gray-800 mb-4">
-                    <i class="fas fa-edit mr-2 text-yellow-600"></i>Edit Pending Balance
+                    <i class="fas fa-edit mr-2 text-green-600"></i>Edit Main Balance
                 </h2>
                 <div class="space-y-4">
                     <div>
                         <label class="block text-gray-700 font-medium mb-2">Current Balance</label>
-                        <div class="text-3xl font-bold text-yellow-600">৳{{ "%.2f"|format(pending_balance) }}</div>
+                        <div class="text-3xl font-bold text-green-600">৳{{ "%.2f"|format(main_balance) }}</div>
                     </div>
                     <div>
                         <label for="pending_balance" class="block text-gray-700 font-medium mb-2">New Balance</label>
-                        <input type="number" id="pending_balance" step="0.01" value="{{ "%.2f"|format(pending_balance) }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        <input type="number" id="pending_balance" step="0.01" value="{{ "%.2f"|format(main_balance) }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
                     </div>
                     <button onclick="updatePendingBalance('{{ user.id }}')" 
-                            class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-lg transition">
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition">
                         <i class="fas fa-save mr-2"></i>Update Balance
                     </button>
                 </div>

@@ -973,6 +973,12 @@ def admin_user_detail(user_id):
         })
 
     pending_balance = db.session.query(db.func.sum(Earnings.amount)).filter_by(user_id=user_id, status='pending').scalar() or 0
+    
+    # Get main (approved) balance - sum of sales earnings with approved status minus withdrawn
+    gross_approved = db.session.query(db.func.sum(Earnings.amount)).filter_by(user_id=user_id, type='sales', status='approved').scalar() or 0
+    withdrawn = db.session.query(db.func.sum(Earnings.amount)).filter_by(user_id=user_id, type='sales', status='withdrawn').scalar() or 0
+    main_balance = gross_approved - withdrawn
+    
     referral_balance = db.session.query(db.func.sum(Earnings.amount)).filter_by(user_id=user_id, type='referral', status='approved').scalar() or 0
     referral_count = User.query.filter_by(referred_by=user_id).count()
 
@@ -982,7 +988,7 @@ def admin_user_detail(user_id):
     return render_template('admin_user_detail.html',
                          user=user,
                          accounts=user_accounts,
-                         pending_balance=pending_balance,
+                         main_balance=main_balance,
                          referral_balance=referral_balance,
                          referral_count=referral_count,
                          referrals=referrals_list)
@@ -990,7 +996,7 @@ def admin_user_detail(user_id):
 @app.route('/admin/api/user/<user_id>/balance', methods=['POST'])
 @admin_required
 def admin_update_balance(user_id):
-    """Update user's pending balance"""
+    """Update user's main (approved sales) balance"""
     from database import Earnings
 
     user = find_user_by_id(user_id)
@@ -1001,13 +1007,17 @@ def admin_update_balance(user_id):
     new_balance = float(data.get('balance', 0))
 
     try:
-        db.session.query(Earnings).filter_by(user_id=user_id, status='pending', type='sales').delete()
+        # Delete all approved sales earnings (these form the main balance)
+        db.session.query(Earnings).filter_by(user_id=user_id, status='approved', type='sales').delete()
+        
+        # Create new approved earning with the new balance
         if new_balance > 0:
             earning = Earnings(
                 user_id=user_id,
                 amount=new_balance,
                 type='sales',
-                status='pending'
+                status='approved',
+                approved_at=datetime.utcnow()
             )
             db.session.add(earning)
         db.session.commit()
