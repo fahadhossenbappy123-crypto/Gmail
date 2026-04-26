@@ -28,29 +28,9 @@ config = ProductionConfig if env == 'production' else DevelopmentConfig
 app.config.from_object(config)
 
 logger.info(f"App configured for {env} environment")
+logger.info(f"Database: {app.config.get('SQLALCHEMY_DATABASE_URI', 'Not set')[:50]}...")
 
-# Initialize database (lazy - only when first request comes in)
-@app.before_request
-def init_db_on_request():
-    """Initialize database on first request if not already done"""
-    if not hasattr(app, '_db_initialized'):
-        with app.app_context():
-            try:
-                # Test connection and create tables
-                from sqlalchemy import text
-                with db.engine.connect() as conn:
-                    conn.execute(text("SELECT 1"))
-                    conn.commit()
-                
-                db.create_all()
-                app._db_initialized = True
-                logger.info("✓ Database tables created/verified")
-                logger.info(f"  Database connected successfully")
-            except Exception as e:
-                logger.warning(f"Could not initialize database: {type(e).__name__}")
-                logger.warning(f"  Error: {str(e)[:200]}...")
-                logger.warning(f"  Retrying on next request...")
-                # Don't mark as initialized to retry on next request
+# Database is automatically initialized in app.py before_first_request
 
 # Get port from environment variable (Render provides this)
 port = int(os.getenv('PORT', 5000))
