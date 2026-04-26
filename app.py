@@ -731,9 +731,10 @@ def create_withdrawal():
     earnings = get_user_earnings(user_id)
     referral_earnings_data = get_referral_earnings(user_id)
     
+    pending_balance = earnings['pending']
     main_balance = earnings['approved']
     referral_balance = referral_earnings_data['approved']
-    total_balance = main_balance + referral_balance
+    total_balance = main_balance
     
     if request.method == 'POST':
         amount = request.form.get('amount', '0')
@@ -756,14 +757,15 @@ def create_withdrawal():
             errors.append('Invalid bKash number (must be 11 digits)')
         
         if errors:
-            return render_template('withdraw.html', errors=errors, main_balance=main_balance,
-                                 referral_balance=referral_balance, total_balance=total_balance,
-                                 user_email=user_email)
+            return render_template('withdraw.html', errors=errors, pending_balance=pending_balance,
+                                 main_balance=main_balance, referral_balance=referral_balance,
+                                 total_balance=total_balance, user_email=user_email)
         
         try:
             withdrawal = Withdrawal(
                 user_id=user_id,
-                amount=amount
+                amount=amount,
+                bkash_number=bkash_number
             )
             db.session.add(withdrawal)
             db.session.commit()
@@ -773,12 +775,13 @@ def create_withdrawal():
         except Exception as e:
             db.session.rollback()
             return render_template('withdraw.html', errors=[f'Error: {str(e)[:100]}'],
-                                 main_balance=main_balance, referral_balance=referral_balance,
-                                 total_balance=total_balance, user_email=user_email)
+                                 pending_balance=pending_balance, main_balance=main_balance,
+                                 referral_balance=referral_balance, total_balance=total_balance,
+                                 user_email=user_email)
     
-    return render_template('withdraw.html', main_balance=main_balance,
-                         referral_balance=referral_balance, total_balance=total_balance,
-                         user_email=user_email)
+    return render_template('withdraw.html', pending_balance=pending_balance,
+                         main_balance=main_balance, referral_balance=referral_balance,
+                         total_balance=total_balance, user_email=user_email)
 
 # ============ ADMIN ROUTES ============
 
@@ -1059,20 +1062,25 @@ def admin_update_account_status(account_id):
         old_status = account.status
         account.status = new_status
         
-        # If approving account, create earnings record
-        if new_status == 'approved' and old_status != 'approved':
-            existing = Earnings.query.filter_by(gmail_id=account_id).first()
-            if not existing:
+        # Update sales earnings based on account status changes
+        existing = Earnings.query.filter_by(gmail_id=account_id, type='sales').first()
+        if new_status == 'approved':
+            if existing:
+                existing.status = 'approved'
+                existing.approved_at = datetime.utcnow()
+            else:
                 earning = Earnings(
                     user_id=account.user_id,
                     amount=account.price,
                     type='sales',
                     gmail_id=account_id,
-                    status='approved'
+                    status='approved',
+                    approved_at=datetime.utcnow()
                 )
                 db.session.add(earning)
-                
-                # Add referral bonus
+
+            # Add referral bonus only when account transitions to approved
+            if old_status != 'approved':
                 user = account.user
                 if user and user.referred_by:
                     referral_amount = (account.price * REFERRAL_PERCENTAGE) / 100
@@ -1080,10 +1088,14 @@ def admin_update_account_status(account_id):
                         user_id=user.referred_by,
                         amount=referral_amount,
                         type='referral',
-                        status='approved'
+                        status='approved',
+                        approved_at=datetime.utcnow()
                     )
                     db.session.add(referral_earning)
-        
+        elif new_status == 'rejected' and existing:
+            existing.status = 'rejected'
+            existing.approved_at = datetime.utcnow()
+
         db.session.commit()
         return jsonify({'success': True, 'status': new_status})
     

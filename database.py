@@ -57,6 +57,7 @@ class Withdrawal(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
+    bkash_number = db.Column(db.String(11), nullable=False)  # 11-digit bKash number
     status = db.Column(db.String(50), default='pending')  # pending, approved, rejected
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     processed_at = db.Column(db.DateTime, nullable=True)
