@@ -24,9 +24,23 @@ app.config.from_object(config)
 # Initialize SQLAlchemy with the app
 db.init_app(app)
 
-# Initialize database on app creation
-with app.app_context():
-    db.create_all()
+# Note: db.create_all() is called in run.py with proper error handling
+# This prevents startup failures if database is temporarily unavailable
+
+# Track if database has been initialized
+_db_initialized = False
+
+@app.before_request
+def ensure_database_initialized():
+    """Ensure database tables exist before handling requests"""
+    global _db_initialized
+    if not _db_initialized:
+        try:
+            db.create_all()
+            _db_initialized = True
+        except Exception as e:
+            # Log but don't fail - allow request to proceed
+            print(f"Note: Database initialization deferred due to: {e}")
 
 # Admin account
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@gmail.com')

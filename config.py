@@ -50,13 +50,14 @@ class Config:
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,  # Verify connection before using
         'pool_recycle': 3600,   # Recycle connections every hour
-        'pool_size': 5,         # Reduced for free tier Render
-        'max_overflow': 10,     # Reduced for free tier Render
+        'pool_size': 2,         # Minimal pool for free tier Render
+        'max_overflow': 5,      # Minimal overflow for free tier
         'echo_pool': False,
         'connect_args': {
-            'connect_timeout': 10,
+            'connect_timeout': 5,
             'application_name': 'gmail_create_app'
-        }
+        },
+        'pool_reset_on_return': 'rollback'  # Rollback on error
     }
 
 class DevelopmentConfig(Config):

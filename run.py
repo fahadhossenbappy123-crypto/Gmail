@@ -28,6 +28,20 @@ config = ProductionConfig if env == 'production' else DevelopmentConfig
 app.config.from_object(config)
 
 logger.info(f"App configured for {env} environment")
+
+# Initialize database with error handling
+try:
+    with app.app_context():
+        logger.info("Initializing database...")
+        db.create_all()
+        logger.info("✅ Database initialized successfully")
+except Exception as e:
+    logger.warning(f"⚠️ Could not initialize database: {e}")
+    logger.info("Continuing without database initialization (will retry on first request)")
+
+if __name__ == '__main__':
+    logger.info("Starting Flask development server...")
+    app.run(debug=True, host='0.0.0.0', port=5000)
 logger.info(f"Database: {app.config.get('SQLALCHEMY_DATABASE_URI', 'Not set')[:50]}...")
 
 # Database is automatically initialized in app.py before_first_request
