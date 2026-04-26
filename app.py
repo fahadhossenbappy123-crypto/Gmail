@@ -37,10 +37,37 @@ def ensure_database_initialized():
     if not _db_initialized:
         try:
             db.create_all()
+            # Run migrations
+            migrate_database()
             _db_initialized = True
         except Exception as e:
             # Log but don't fail - allow request to proceed
             print(f"Note: Database initialization deferred due to: {e}")
+
+def migrate_database():
+    """Run database schema migrations"""
+    try:
+        from sqlalchemy import text, inspect
+        
+        # Check if withdrawals table exists
+        inspector = inspect(db.engine)
+        if 'withdrawals' not in inspector.get_table_names():
+            print("📋 Withdrawals table doesn't exist yet, will be created by db.create_all()")
+            return
+        
+        # Check if bkash_number column exists in withdrawals table
+        columns = [col['name'] for col in inspector.get_columns('withdrawals')]
+        
+        if 'bkash_number' not in columns:
+            print("🔄 Migrating: Adding bkash_number column to withdrawals table...")
+            with db.engine.connect() as conn:
+                # Add column with default value for existing records
+                conn.execute(text('ALTER TABLE withdrawals ADD COLUMN bkash_number VARCHAR(11) DEFAULT NULL'))
+                conn.commit()
+            print("✅ Migration complete: bkash_number column added")
+    except Exception as e:
+        print(f"Migration note: {e}")
+        # Continue even if migration fails - might already exist
 
 # Admin account
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@gmail.com')
