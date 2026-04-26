@@ -1079,7 +1079,7 @@ def admin_update_account_status(account_id):
                 )
                 db.session.add(earning)
 
-            # Add referral bonus only when account transitions to approved
+            # Add referral commission to referrer's main balance when Gmail is approved
             if old_status != 'approved':
                 user = account.user
                 if user and user.referred_by:
@@ -1087,7 +1087,7 @@ def admin_update_account_status(account_id):
                     referral_earning = Earnings(
                         user_id=user.referred_by,
                         amount=referral_amount,
-                        type='referral',
+                        type='sales',  # Commission goes to main balance
                         status='approved',
                         approved_at=datetime.utcnow()
                     )
