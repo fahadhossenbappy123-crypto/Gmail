@@ -763,8 +763,10 @@ def create_withdrawal():
     
     pending_balance = earnings['pending']
     main_balance = earnings['approved']
+    withdrawn_balance = earnings['withdrawn']
+    available_balance = main_balance - withdrawn_balance  # Balance after withdrawals
     referral_balance = referral_earnings_data['approved']
-    total_balance = main_balance
+    total_balance = available_balance  # Use available balance for withdrawal
     
     if request.method == 'POST':
         amount = request.form.get('amount', '0')
@@ -798,6 +800,18 @@ def create_withdrawal():
                 bkash_number=bkash_number
             )
             db.session.add(withdrawal)
+            db.session.flush()  # Get the withdrawal ID
+            
+            # Auto-deduct from main balance by creating a withdrawn earning
+            from database import Earnings
+            deduction = Earnings(
+                user_id=user_id,
+                amount=amount,
+                type='sales',
+                status='withdrawn',  # Mark as withdrawn to deduct from balance
+                approved_at=datetime.utcnow()
+            )
+            db.session.add(deduction)
             db.session.commit()
             
             return render_template('withdraw_success.html', withdrawal=withdrawal, user_email=user_email)
