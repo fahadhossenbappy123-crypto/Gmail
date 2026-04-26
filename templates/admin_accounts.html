@@ -87,7 +87,7 @@
 
                     <div class="mb-4 pt-4 border-t">
                         <p class="text-gray-600 text-xs">Created</p>
-                        <p class="text-gray-900 text-sm">{{ item.account.created_at[:10] }}</p>
+                        <p class="text-gray-900 text-sm">{{ item.account.created_at.strftime('%Y-%m-%d') }}</p>
                     </div>
 
                     {% if item.account.status == 'pending' %}

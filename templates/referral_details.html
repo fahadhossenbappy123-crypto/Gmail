@@ -263,7 +263,7 @@
                         </td>
                         <td class="py-4 px-4 text-gray-600">
                             <i class="fas fa-calendar-alt text-gray-400 mr-2"></i>
-                            {{ referral.created_at[:10] }}
+                            {{ referral.created_at.strftime('%Y-%m-%d') }}
                         </td>
                         <td class="py-4 px-4 text-center">
                             <span class="font-bold text-green-600 text-lg">৳1.00</span>

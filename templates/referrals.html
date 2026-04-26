@@ -150,7 +150,7 @@
                             <span class="font-medium text-gray-800">{{ referral.email }}</span>
                         </td>
                         <td class="py-4 px-4 text-gray-600">
-                            {{ referral.created_at[:10] }}
+                            {{ referral.created_at.strftime('%Y-%m-%d') }}
                         </td>
                         <td class="py-4 px-4 text-center">
                             <span class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">

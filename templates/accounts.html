@@ -119,7 +119,7 @@
 
                     <div>
                         <p class="text-gray-600 text-sm font-semibold mb-1">Created Date</p>
-                        <p class="text-gray-800">{{ account.created_at.split('T')[0] }}</p>
+                        <p class="text-gray-800">{{ account.created_at.strftime('%Y-%m-%d') }}</p>
                     </div>
 
                     <div>
