@@ -495,13 +495,14 @@ def get_user_earnings(user_id):
     from database import Earnings
     earnings = Earnings.query.filter_by(user_id=user_id, type='sales').all()
     pending = sum(e.amount for e in earnings if e.status == 'pending')
-    approved = sum(e.amount for e in earnings if e.status == 'approved')
+    gross_approved = sum(e.amount for e in earnings if e.status == 'approved')
     withdrawn = sum(e.amount for e in earnings if e.status == 'withdrawn')
+    available = gross_approved - withdrawn  # Net available after withdrawals
     return {
         'pending': pending,
-        'approved': approved,
+        'approved': available,  # Show available balance (approved - withdrawn)
         'withdrawn': withdrawn,
-        'total': pending + approved + withdrawn
+        'total': pending + gross_approved
     }
 
 def get_referral_earnings(user_id):
@@ -762,11 +763,9 @@ def create_withdrawal():
     referral_earnings_data = get_referral_earnings(user_id)
     
     pending_balance = earnings['pending']
-    main_balance = earnings['approved']
-    withdrawn_balance = earnings['withdrawn']
-    available_balance = main_balance - withdrawn_balance  # Balance after withdrawals
+    main_balance = earnings['approved']  # Already reflects available balance (approved - withdrawn)
     referral_balance = referral_earnings_data['approved']
-    total_balance = available_balance  # Use available balance for withdrawal
+    total_balance = main_balance
     
     if request.method == 'POST':
         amount = request.form.get('amount', '0')
