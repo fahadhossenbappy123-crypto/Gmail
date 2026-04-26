@@ -464,9 +464,9 @@ def admin_required(f):
 
 # Helper functions for earnings calculation from database
 def get_user_earnings(user_id):
-    """Get all earnings for a user from database"""
+    """Get sales earnings for a user from database (excludes referral earnings)"""
     from database import Earnings
-    earnings = Earnings.query.filter_by(user_id=user_id).all()
+    earnings = Earnings.query.filter_by(user_id=user_id, type='sales').all()
     pending = sum(e.amount for e in earnings if e.status == 'pending')
     approved = sum(e.amount for e in earnings if e.status == 'approved')
     withdrawn = sum(e.amount for e in earnings if e.status == 'withdrawn')
