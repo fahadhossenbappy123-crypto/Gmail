@@ -44,6 +44,23 @@ def ensure_database_initialized():
             # Log but don't fail - allow request to proceed
             print(f"Note: Database initialization deferred due to: {e}")
 
+@app.before_request
+def check_user_ban_status():
+    """Check if logged-in user is banned and auto-logout if they are"""
+    from database import User
+    
+    user_id = session.get('user_id')
+    if user_id:
+        try:
+            user = User.query.get(user_id)
+            if user and user.is_banned:
+                # User is banned, logout immediately
+                session.clear()
+                return redirect(url_for('login'))
+        except Exception as e:
+            print(f"Error checking user ban status: {e}")
+            # Continue normally if there's an error
+
 def migrate_database():
     """Run database schema migrations"""
     try:
