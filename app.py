@@ -395,9 +395,21 @@ def register():
             
             except Exception as db_error:
                 db.session.rollback()
+                error_msg = str(db_error)
+                
+                # Check for database connection errors
+                if 'could not translate host name' in error_msg or 'OperationalError' in error_msg:
+                    db_error_msg = "Database connection failed. Please contact administrator."
+                    print(f"🔴 Database Error: {error_msg}")
+                elif 'duplicate key' in error_msg.lower():
+                    db_error_msg = "Email already registered"
+                else:
+                    db_error_msg = f"Error: {error_msg[:100]}"
+                
                 return render_template('register.html', 
-                                     errors=[f"Error: {str(db_error)[:100]}"], 
-                                     email=email)
+                                     errors=[db_error_msg], 
+                                     email=email,
+                                     referral_code=ref_code)
         
         return render_template('register.html', referral_code=referral_code, 
                              referral_error=referral_error)

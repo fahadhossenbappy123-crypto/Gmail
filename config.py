@@ -24,12 +24,10 @@ def get_database_uri():
     
     # For production without DATABASE_URL, try to build from components
     if ENVIRONMENT == 'production':
-        db_user = os.getenv('DB_USER', 'gmaildb_user')
-        db_password = os.getenv('DB_PASSWORD', 'password')
-        db_host = os.getenv('DB_HOST', 'localhost')
-        db_port = os.getenv('DB_PORT', '5432')
-        db_name = os.getenv('DB_NAME', 'gmaildb')
-        return f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
+        # If running on Render without DATABASE_URL, use SQLite as fallback
+        print("⚠️  WARNING: DATABASE_URL not set. Using SQLite fallback.")
+        print("    On Render: Add PostgreSQL database and set DATABASE_URL environment variable")
+        return 'sqlite:///gmail_app.db'
     
     # For development, use SQLite
     return 'sqlite:///gmail_app.db'
