@@ -49,7 +49,7 @@ GMAIL_PRICE = float(os.getenv('GMAIL_PRICE', '5.00'))
 REFERRAL_PERCENTAGE = float(os.getenv('REFERRAL_PERCENTAGE', '10'))
 
 # Google Sheets config
-SHEETS_CREDENTIALS_FILE = os.getenv('GOOGLE_SERVICE_ACCOUNT', 'rugged-nucleus-494309-h6-1e1f8ffafa43.json')
+GOOGLE_CREDENTIALS = os.getenv('GOOGLE_CREDENTIALS')
 SHEETS_SPREADSHEET_ID = os.getenv('SHEETS_SPREADSHEET_ID', '1Czkp_Yflqvd7zQMdZ6dUfAiD_wVexucfJz7ut8f-eVA')
 
 def generate_referral_code():
@@ -147,12 +147,15 @@ def find_user_by_referral_code(code):
 def get_sheets_service():
     """Initialize Google Sheets API service"""
     try:
-        if not os.path.exists(SHEETS_CREDENTIALS_FILE):
-            print(f"⚠️ Credentials file not found: {SHEETS_CREDENTIALS_FILE}")
+        if not GOOGLE_CREDENTIALS:
+            print("❌ GOOGLE_CREDENTIALS environment variable not set")
             return None
         
-        with open(SHEETS_CREDENTIALS_FILE) as f:
-            creds_info = json.load(f)
+        try:
+            creds_info = json.loads(GOOGLE_CREDENTIALS)
+        except json.JSONDecodeError:
+            print("❌ Invalid JSON in GOOGLE_CREDENTIALS environment variable")
+            return None
         
         credentials = Credentials.from_service_account_info(
             creds_info,
@@ -163,12 +166,6 @@ def get_sheets_service():
         print(f"✅ Google Sheets API connected: {creds_info.get('client_email')}")
         return service
     
-    except FileNotFoundError:
-        print(f"❌ Credentials file not found: {SHEETS_CREDENTIALS_FILE}")
-        return None
-    except json.JSONDecodeError:
-        print(f"❌ Invalid JSON in credentials file")
-        return None
     except Exception as e:
         print(f"❌ Error initializing Sheets service: {e}")
         return None
