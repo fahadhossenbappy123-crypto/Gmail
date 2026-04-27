@@ -35,6 +35,28 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
         }
+
+        /* Mobile Bottom Navigation Styling */
+        @media (max-width: 768px) {
+            body {
+                padding-bottom: 80px;
+            }
+            
+            .mobile-bottom-nav {
+                animation: slideUp 0.3s ease-out;
+            }
+
+            @keyframes slideUp {
+                from {
+                    transform: translateY(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+        }
     </style>
 </head>
 <body>
@@ -154,7 +176,7 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="py-8 px-4">
+    <div class="pb-20 md:pb-8 px-4">
         {% block content %}{% endblock %}
     </div>
 
@@ -162,5 +184,47 @@
     <footer class="bg-gray-900 text-gray-400 text-center py-4 mt-12">
         <p>&copy; 2026 Gmail Earn - All Rights Reserved | Earn by creating Gmail accounts</p>
     </footer>
+
+    <!-- Mobile Bottom Navigation (Only Visible on Mobile) -->
+    {% if session.get('user_id') %}
+    <div class="mobile-bottom-nav fixed bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 to-gray-800 border-t border-gray-700 md:hidden z-40 shadow-2xl">
+        <div class="flex justify-around items-center py-3 px-2 max-w-full">
+            <!-- Dashboard -->
+            <a href="{{ url_for('dashboard') }}" 
+               class="flex flex-col items-center gap-1 px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
+                <i class="fas fa-home text-lg sm:text-xl"></i>
+                <span class="text-xs font-medium">Dashboard</span>
+            </a>
+
+            <!-- Accounts -->
+            <a href="{{ url_for('view_accounts') }}" 
+               class="flex flex-col items-center gap-1 px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
+                <i class="fas fa-list text-lg sm:text-xl"></i>
+                <span class="text-xs font-medium">Accounts</span>
+            </a>
+
+            <!-- Create Gmail Account (Main Action Button - Center) -->
+            <a href="{{ url_for('create_gmail_earn') }}" 
+               class="flex flex-col items-center gap-1 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-lg hover:shadow-xl transition transform hover:scale-105 -mt-4 flex-1">
+                <i class="fas fa-plus text-lg sm:text-xl"></i>
+                <span class="text-xs font-bold">Create</span>
+            </a>
+
+            <!-- Referrals -->
+            <a href="{{ url_for('referrals') }}" 
+               class="flex flex-col items-center gap-1 px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
+                <i class="fas fa-gift text-lg sm:text-xl"></i>
+                <span class="text-xs font-medium">Refer</span>
+            </a>
+
+            <!-- Profile -->
+            <a href="{{ url_for('dashboard') }}" 
+               class="flex flex-col items-center gap-1 px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
+                <i class="fas fa-user text-lg sm:text-xl"></i>
+                <span class="text-xs font-medium">Profile</span>
+            </a>
+        </div>
+    </div>
+    {% endif %}
 </body>
 </html>
