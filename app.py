@@ -348,7 +348,7 @@ def import_gmail_from_sheets(spreadsheet_id=None, sheet_name='Sheet1', admin_use
         db.session.rollback()
         return {'error': f'Import failed: {str(e)}'}
 
-def upload_gmail_to_sheets(gmail_account):
+def upload_gmail_to_sheets(gmail_account, sender_email=''):
     """Upload single Gmail account to Google Sheets"""
     try:
         service = get_sheets_service()
@@ -359,7 +359,7 @@ def upload_gmail_to_sheets(gmail_account):
             gmail_account.get('name', ''),
             f"{gmail_account.get('username', '')}@gmail.com",
             gmail_account.get('password', ''),
-            gmail_account.get('username', '')
+            sender_email
         ]
         
         # Append to sheet
@@ -468,10 +468,11 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """User login"""
+    """User login with session persistence"""
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '').strip()
+        remember_me = request.form.get('remember') == 'on'
         
         user = find_user_by_email(email)
         
@@ -482,9 +483,19 @@ def login():
         if user.is_banned:
             return render_template('login.html', error='Your account has been suspended. Please contact support.')
         
-        # Set session
+        # Set session with persistence
+        session.permanent = True  # Make session persistent across browser restarts
+        
+        # If "Remember Me" is checked, extend session lifetime to 30 days
+        if remember_me:
+            app.permanent_session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
+        else:
+            # Session expires in 24 hours
+            app.permanent_session_lifetime = 24 * 60 * 60
+        
         session['user_id'] = user.id
         session['user_email'] = user.email
+        session['login_time'] = datetime.now().isoformat()
         session.modified = True
         
         return redirect(url_for('dashboard'))
@@ -643,7 +654,7 @@ def create_gmail_earn():
                 'name': credentials['name'],
                 'username': credentials['username'],
                 'password': credentials['password']
-            })
+            }, sender_email=user_email)
             
             if sheets_result.get('error'):
                 print(f"⚠️ Warning: Failed to save to Google Sheets: {sheets_result['error']}")
@@ -858,14 +869,25 @@ def create_withdrawal():
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """Admin login"""
+    """Admin login with session persistence"""
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '').strip()
+        remember_me = request.form.get('remember') == 'on'
         
         if email == ADMIN_EMAIL and (password == ADMIN_PASSWORD or check_password_hash(ADMIN_PASSWORD, password)):
+            # Set session with persistence
+            session.permanent = True
+            
+            # If "Remember Me" is checked, extend session lifetime to 30 days
+            if remember_me:
+                app.permanent_session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
+            else:
+                app.permanent_session_lifetime = 24 * 60 * 60
+            
             session['admin_id'] = 'admin'
             session['admin_email'] = email
+            session['login_time'] = datetime.now().isoformat()
             session.modified = True
             return redirect(url_for('admin_dashboard'))
         else:

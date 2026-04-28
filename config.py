@@ -57,6 +57,12 @@ class Config:
         },
         'pool_reset_on_return': 'rollback'  # Rollback on error
     }
+    
+    # Session Configuration for Browser Persistence
+    PERMANENT_SESSION_LIFETIME = 30 * 24 * 60 * 60  # 30 days
+    SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+    SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access
+    SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
 
 class DevelopmentConfig(Config):
     """Development configuration"""
