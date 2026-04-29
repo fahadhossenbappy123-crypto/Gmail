@@ -759,6 +759,101 @@ def approve_account(account_id):
     """Admin endpoint to approve an account - DEPRECATED USE ADMIN ENDPOINT"""
     return jsonify({'error': 'Use admin endpoint instead'}), 404
 
+# ===== NOTIFICATION ENDPOINTS =====
+
+@app.route('/api/notifications', methods=['GET'])
+@login_required
+def get_notifications():
+    """Get all notifications for the logged-in user"""
+    from database import Notification
+    
+    user_id = session.get('user_id')
+    limit = request.args.get('limit', 20, type=int)
+    
+    notifications = Notification.query.filter_by(user_id=user_id).order_by(
+        Notification.created_at.desc()
+    ).limit(limit).all()
+    
+    return jsonify({
+        'success': True,
+        'notifications': [
+            {
+                'id': n.id,
+                'title': n.title,
+                'message': n.message,
+                'type': n.type,
+                'is_read': n.is_read,
+                'created_at': n.created_at.isoformat(),
+                'related_id': n.related_id
+            }
+            for n in notifications
+        ]
+    })
+
+@app.route('/api/notifications/unread-count', methods=['GET'])
+@login_required
+def get_unread_notifications_count():
+    """Get count of unread notifications"""
+    from database import Notification
+    
+    user_id = session.get('user_id')
+    count = Notification.query.filter_by(user_id=user_id, is_read=False).count()
+    
+    return jsonify({
+        'success': True,
+        'unread_count': count
+    })
+
+@app.route('/api/notifications/<notification_id>/read', methods=['POST'])
+@login_required
+def mark_notification_as_read(notification_id):
+    """Mark a notification as read"""
+    from database import Notification
+    
+    user_id = session.get('user_id')
+    
+    notification = Notification.query.get(notification_id)
+    if not notification:
+        return jsonify({'error': 'Notification not found'}), 404
+    
+    if notification.user_id != user_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    try:
+        notification.is_read = True
+        db.session.commit()
+        
+        # Get updated unread count
+        unread_count = Notification.query.filter_by(user_id=user_id, is_read=False).count()
+        
+        return jsonify({
+            'success': True,
+            'unread_count': unread_count
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/notifications/mark-all-read', methods=['POST'])
+@login_required
+def mark_all_notifications_as_read():
+    """Mark all notifications as read"""
+    from database import Notification
+    
+    user_id = session.get('user_id')
+    
+    try:
+        Notification.query.filter_by(user_id=user_id, is_read=False).update({'is_read': True})
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'unread_count': 0
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/accounts')
 @login_required
 def view_accounts():
@@ -1183,7 +1278,7 @@ def admin_accounts():
 @admin_required
 def admin_update_account_status(account_id):
     """Update account status"""
-    from database import GmailAccount, Earnings, User
+    from database import GmailAccount, Earnings, User, Notification
     
     try:
         data = request.get_json()
@@ -1226,9 +1321,30 @@ def admin_update_account_status(account_id):
                         approved_at=datetime.utcnow()
                     )
                     db.session.add(referral_earning)
+            
+            # Create notification for user
+            notification = Notification(
+                user_id=account.user_id,
+                title='✅ Gmail Account Approved!',
+                message=f'Your Gmail account {account.email} has been approved. You earned ৳{account.price:.2f}',
+                type='account_approved',
+                related_id=account_id
+            )
+            db.session.add(notification)
+            
         elif new_status == 'rejected' and existing:
             existing.status = 'rejected'
             existing.approved_at = datetime.utcnow()
+            
+            # Create notification for user
+            notification = Notification(
+                user_id=account.user_id,
+                title='❌ Gmail Account Rejected',
+                message=f'Your Gmail account {account.email} was rejected. Please review and try again.',
+                type='account_rejected',
+                related_id=account_id
+            )
+            db.session.add(notification)
 
         db.session.commit()
         return jsonify({'success': True, 'status': new_status})
@@ -1265,7 +1381,7 @@ def admin_view_withdrawals():
 @admin_required
 def admin_update_withdrawal_status(withdrawal_id):
     """Admin update withdrawal status"""
-    from database import Withdrawal
+    from database import Withdrawal, Notification
     
     try:
         data = request.get_json()
@@ -1277,6 +1393,30 @@ def admin_update_withdrawal_status(withdrawal_id):
         
         withdrawal.status = new_status
         withdrawal.processed_at = datetime.utcnow()
+        
+        # Create notification for user
+        if new_status == 'completed':
+            notification = Notification(
+                user_id=withdrawal.user_id,
+                title='✅ Withdrawal Approved!',
+                message=f'Your withdrawal of ৳{withdrawal.amount:.2f} to {withdrawal.bkash_number} has been approved and is being processed.',
+                type='withdrawal_approved',
+                related_id=withdrawal_id
+            )
+        elif new_status == 'rejected':
+            notification = Notification(
+                user_id=withdrawal.user_id,
+                title='❌ Withdrawal Rejected',
+                message=f'Your withdrawal of ৳{withdrawal.amount:.2f} was rejected. The amount has been refunded to your account.',
+                type='withdrawal_rejected',
+                related_id=withdrawal_id
+            )
+        else:
+            notification = None
+        
+        if notification:
+            db.session.add(notification)
+        
         db.session.commit()
         
         return jsonify({'success': True, 'status': new_status})

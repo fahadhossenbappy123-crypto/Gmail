@@ -23,6 +23,7 @@ class User(db.Model):
     gmail_accounts = db.relationship('GmailAccount', backref='user', lazy=True, cascade='all, delete-orphan')
     earnings = db.relationship('Earnings', backref='user', lazy=True, cascade='all, delete-orphan')
     withdrawals = db.relationship('Withdrawal', backref='user', lazy=True, cascade='all, delete-orphan')
+    notifications = db.relationship('Notification', backref='user', lazy=True, cascade='all, delete-orphan')
 
 class GmailAccount(db.Model):
     __tablename__ = 'gmail_accounts'
@@ -62,3 +63,16 @@ class Withdrawal(db.Model):
     status = db.Column(db.String(50), default='pending')  # pending, approved, rejected
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     processed_at = db.Column(db.DateTime, nullable=True)
+
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+    
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # 'account_approved', 'withdrawal_approved', 'withdrawal_rejected', 'account_rejected'
+    related_id = db.Column(db.String(36), nullable=True)  # account_id or withdrawal_id
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
