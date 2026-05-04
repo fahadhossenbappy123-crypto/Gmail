@@ -7,15 +7,25 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
         
+        /* Navbar Styles */
         .navbar {
             background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
         
         .navbar a {
@@ -36,12 +46,253 @@
             box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
         }
 
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 5px;
+            z-index: 100;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(10px, 10px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            flex-direction: column;
+            padding: 20px;
+            gap: 10px;
+            max-height: calc(100vh - 70px);
+            overflow-y: auto;
+            z-index: 99;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mobile-menu a {
+            color: #cbd5e1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .mobile-menu a:hover {
+            background-color: #334155;
+            color: #667eea;
+        }
+
+        /* Notification Badge */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+        }
+
+        .notification-badge.hidden {
+            display: none;
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 350px;
+            max-height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            margin-top: 10px;
+            overflow: hidden;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .notification-dropdown.active {
+            display: flex;
+        }
+
+        .notification-header {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f9fafb;
+        }
+
+        .notification-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .notification-header button {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .notification-header button:hover {
+            color: #667eea;
+        }
+
+        .notification-content {
+            overflow-y: auto;
+            max-height: 400px;
+            flex: 1;
+        }
+
+        .notification-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+
+        .notification-item:hover {
+            background-color: #f9fafb;
+        }
+
+        .notification-item.unread {
+            background-color: #eff6ff;
+            border-left: 4px solid #667eea;
+        }
+
+        .notification-item-title {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .notification-item-message {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .notification-item-time {
+            color: #9ca3af;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        .notification-empty {
+            text-align: center;
+            padding: 32px 16px;
+            color: #9ca3af;
+        }
+
+        .notification-empty i {
+            font-size: 32px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .notification-footer {
+            padding: 12px 16px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+        }
+
+        .notification-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .notification-footer a:hover {
+            color: #764ba2;
+        }
+
         /* Mobile Bottom Navigation Styling */
         @media (max-width: 768px) {
             body {
+                padding-top: 70px;
                 padding-bottom: 80px;
             }
-            
+
+            .hamburger {
+                display: flex;
+            }
+
+            .navbar .nav-links {
+                display: none;
+            }
+
+            .navbar .nav-actions {
+                gap: 12px !important;
+            }
+
+            .notification-dropdown {
+                width: calc(100vw - 32px);
+                max-width: 350px;
+            }
+
             .mobile-bottom-nav {
                 animation: slideUp 0.3s ease-out;
             }
@@ -56,63 +307,175 @@
                     opacity: 1;
                 }
             }
+
+            /* Hide some buttons on mobile */
+            .hide-on-mobile {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .notification-badge {
+                width: 18px;
+                height: 18px;
+                font-size: 10px;
+            }
+        }
+
+        /* Notification Permission Banner */
+        .notification-permission-banner {
+            background: linear-gradient(135deg, #3b82f6 0%, #667eea 100%);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .notification-permission-banner.active {
+            display: flex;
+        }
+
+        .notification-permission-banner p {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .notification-permission-banner .buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .notification-permission-banner button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .notification-permission-banner .allow-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid white;
+        }
+
+        .notification-permission-banner .allow-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .notification-permission-banner .dismiss-btn {
+            background-color: transparent;
+            color: white;
+            border: none;
+            text-decoration: underline;
+        }
+
+        .notification-permission-banner .dismiss-btn:hover {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Smooth Scroll */
+        html {
+            scroll-behavior: smooth;
         }
     </style>
 </head>
 <body>
+    <!-- Notification Permission Banner -->
+    {% if session.get('user_id') %}
+    <div class="notification-permission-banner" id="notificationBanner">
+        <p>📢 Enable notifications to get instant updates on approvals and withdrawals</p>
+        <div class="buttons">
+            <button class="allow-btn" onclick="requestNotificationPermission()">Allow Notifications</button>
+            <button class="dismiss-btn" onclick="dismissNotificationBanner()">Dismiss</button>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Navigation Bar -->
     <nav class="navbar">
-        <div class="max-w-7xl mx-auto px-4 py-5 flex justify-between items-center">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <!-- Logo -->
             <div class="flex items-center gap-3">
                 <i class="fas fa-envelope text-white text-2xl"></i>
-                <a href="{{ url_for('home') if not session.get('user_id') else url_for('dashboard') }}" class="text-white text-xl font-bold">Gmail Earn</a>
+                <a href="{{ url_for('home') if not session.get('user_id') else url_for('dashboard') }}" 
+                   class="text-white text-lg md:text-xl font-bold hover:text-purple-300 transition">
+                    Gmail Earn
+                </a>
             </div>
             
             <!-- If User is Logged In -->
             {% if session.get('user_id') %}
-            <div class="flex gap-4 md:gap-6 items-center flex-wrap md:flex-nowrap">
-                <!-- Navigation Links -->
-                <div class="hidden md:flex gap-4 lg:gap-6">
-                    <a href="{{ url_for('dashboard') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
-                        <i class="fas fa-home"></i> Dashboard
-                    </a>
-                    <a href="{{ url_for('create_gmail_earn') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
-                        <i class="fas fa-plus"></i> Create
-                    </a>
-                    <a href="{{ url_for('view_accounts') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
-                        <i class="fas fa-list"></i> Accounts
-                    </a>
-                    <a href="{{ url_for('referrals') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
-                        <i class="fas fa-share-alt"></i> Referrals
-                    </a>
-                    <a href="{{ url_for('view_withdrawals') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
-                        <i class="fas fa-money-bill-wave"></i> Withdrawals
-                    </a>
-                </div>
+            
+            <!-- Desktop Navigation Links (Hidden on Mobile) -->
+            <div class="nav-links gap-2 hidden md:flex lg:gap-4">
+                <a href="{{ url_for('dashboard') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="{{ url_for('create_gmail_earn') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
+                    <i class="fas fa-plus"></i> Create
+                </a>
+                <a href="{{ url_for('view_accounts') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
+                    <i class="fas fa-list"></i> Accounts
+                </a>
+                <a href="{{ url_for('referrals') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
+                    <i class="fas fa-share-alt"></i> Referrals
+                </a>
+                <a href="{{ url_for('view_withdrawals') }}" class="text-gray-300 hover:text-white transition font-medium text-sm">
+                    <i class="fas fa-money-bill-wave"></i> Withdrawals
+                </a>
+            </div>
 
-                <!-- Balance Display (Compact) -->
-                <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg px-3 py-2 flex items-center gap-2 shadow-lg">
-                    <i class="fas fa-wallet text-white text-lg"></i>
-                    <div>
-                        <p class="text-white text-xs font-bold leading-none">Main Balance</p>
-                        <p class="text-white text-sm font-bold leading-none">
+            <!-- Desktop Right Actions -->
+            <div class="nav-actions flex gap-3 items-center">
+                <!-- Balance Display (Hidden on small mobile) -->
+                <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg px-2 md:px-3 py-2 flex items-center gap-2 shadow-lg hide-on-mobile" style="display: flex;">
+                    <i class="fas fa-wallet text-white text-sm md:text-lg"></i>
+                    <div class="hidden sm:block">
+                        <p class="text-white text-xs font-bold leading-none">Balance</p>
+                        <p class="text-white text-xs md:text-sm font-bold leading-none">
                             ৳{{ "%.2f"|format(main_balance if main_balance else 0) }}
                         </p>
                     </div>
                 </div>
 
-                <!-- Withdraw Button (Compact) -->
+                <!-- Withdraw Button -->
                 <a href="{{ url_for('create_withdrawal') }}" 
-                   class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 md:px-4 rounded-lg transition transform hover:scale-105 shadow-md text-sm inline-block">
+                   class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg transition shadow-md text-xs md:text-sm hide-on-mobile inline-block">
                     <i class="fas fa-arrow-down"></i> Withdraw
                 </a>
 
-                <!-- Referral Button (NEW) -->
-                <a href="{{ url_for('referrals') }}" 
-                   class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 md:px-4 rounded-lg transition transform hover:scale-105 shadow-md text-sm">
-                    <i class="fas fa-gift"></i> Refer & Earn
-                </a>
+                <!-- Notification Icon -->
+                <div class="relative group">
+                    <button id="notificationBtn" 
+                            class="bg-gray-700 hover:bg-gray-600 text-white rounded-full w-10 h-10 flex items-center justify-center transition shadow-md relative">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="notification-badge hidden" id="notificationBadge">0</span>
+                    </button>
+                    
+                    <!-- Notification Dropdown -->
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-header">
+                            <h3>Notifications</h3>
+                            <button onclick="markAllAsRead()">Mark all read</button>
+                        </div>
+                        <div class="notification-content" id="notificationContent">
+                            <div class="notification-empty">
+                                <i class="fas fa-bell-slash"></i>
+                                <p>No notifications</p>
+                            </div>
+                        </div>
+                        <div class="notification-footer">
+                            <a href="#">View all notifications →</a>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Profile Dropdown -->
                 <div class="relative group">
@@ -120,10 +483,10 @@
                         <i class="fas fa-user text-lg"></i>
                     </button>
                     
-                    <!-- Dropdown Menu -->
-                    <div class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl hidden group-hover:block z-50 border border-gray-700">
+                    <!-- Profile Dropdown Menu -->
+                    <div class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl hidden group-hover:block z-50 border border-gray-700 top-full">
                         <div class="px-4 py-3 border-b border-gray-700">
-                            <p class="text-white font-semibold text-sm">
+                            <p class="text-white font-semibold text-sm truncate">
                                 <i class="fas fa-envelope text-blue-400"></i> {{ session.get('user_email', 'User') }}
                             </p>
                         </div>
@@ -146,85 +509,338 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Hamburger Menu (Mobile) -->
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
             </div>
 
             <!-- If User is NOT Logged In -->
             {% else %}
-            <div class="flex gap-4 items-center">
+            <div class="flex gap-2 md:gap-4 items-center">
                 <a href="{{ url_for('admin_login') }}" 
-                   class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition text-sm hidden sm:inline-block">
+                   class="px-3 md:px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition text-xs md:text-sm hidden sm:inline-block">
                     <i class="fas fa-shield-alt"></i> Admin
                 </a>
                 <a href="{{ url_for('login') }}" 
-                   class="px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition transform hover:scale-105 shadow-lg">
+                   class="px-3 md:px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition transform hover:scale-105 shadow-lg text-xs md:text-sm">
                     <i class="fas fa-sign-in-alt"></i> Login
                 </a>
                 <a href="{{ url_for('register') }}" 
-                   class="px-6 py-2 bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold rounded-lg hover:shadow-lg transition transform hover:scale-105 shadow-lg">
+                   class="px-3 md:px-6 py-2 bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold rounded-lg hover:shadow-lg transition transform hover:scale-105 shadow-lg text-xs md:text-sm">
                     <i class="fas fa-user-plus"></i> Register
                 </a>
             </div>
             {% endif %}
-
-            <!-- Admin Section (if admin logged in) -->
-            {% if session.get('admin_id') %}
-            <div class="absolute top-0 right-0 bg-red-600 text-white px-4 py-1 text-xs">
-                ADMIN MODE
-            </div>
-            {% endif %}
         </div>
+
+        <!-- Mobile Menu (Hidden by default, shown when hamburger is clicked) -->
+        {% if session.get('user_id') %}
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="{{ url_for('dashboard') }}" class="text-gray-300 hover:text-white transition font-medium">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a href="{{ url_for('create_gmail_earn') }}" class="text-gray-300 hover:text-white transition font-medium">
+                <i class="fas fa-plus"></i> Create Gmail Account
+            </a>
+            <a href="{{ url_for('view_accounts') }}" class="text-gray-300 hover:text-white transition font-medium">
+                <i class="fas fa-list"></i> My Accounts
+            </a>
+            <a href="{{ url_for('referrals') }}" class="text-gray-300 hover:text-white transition font-medium">
+                <i class="fas fa-share-alt"></i> Referrals
+            </a>
+            <a href="{{ url_for('view_withdrawals') }}" class="text-gray-300 hover:text-white transition font-medium">
+                <i class="fas fa-money-bill-wave"></i> Withdrawals
+            </a>
+            <a href="{{ url_for('create_withdrawal') }}" class="text-gray-300 hover:text-white transition font-medium bg-blue-600 rounded">
+                <i class="fas fa-arrow-down"></i> New Withdrawal
+            </a>
+            <hr class="border-gray-700 my-2">
+            <a href="{{ url_for('logout') }}" class="text-red-400 hover:text-red-300 transition font-medium">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Admin Section (if admin logged in) -->
+        {% if session.get('admin_id') %}
+        <div class="absolute top-4 right-4 bg-red-600 text-white px-4 py-1 text-xs font-bold rounded">
+            🔴 ADMIN MODE
+        </div>
+        {% endif %}
     </nav>
 
     <!-- Main Content -->
-    <div class="pb-20 md:pb-8 px-4">
+    <div class="max-w-7xl mx-auto px-4 py-8 md:py-12">
         {% block content %}{% endblock %}
     </div>
 
     <!-- Footer -->
-    <footer class="bg-gray-900 text-gray-400 text-center py-4 mt-12">
-        <p>&copy; 2026 Gmail Earn - All Rights Reserved | Earn by creating Gmail accounts</p>
+    <footer class="bg-gray-900 text-gray-400 text-center py-6 mt-16 border-t border-gray-800">
+        <p class="text-sm">&copy; 2026 Gmail Earn - All Rights Reserved | Earn by creating Gmail accounts</p>
     </footer>
 
     <!-- Mobile Bottom Navigation (Only Visible on Mobile) -->
     {% if session.get('user_id') %}
     <div class="mobile-bottom-nav fixed bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 to-gray-800 border-t border-gray-700 md:hidden z-40 shadow-2xl">
-        <div class="flex justify-around items-center py-3 px-2 max-w-full">
+        <div class="flex justify-around items-center py-3 px-1 max-w-full">
             <!-- Dashboard -->
             <a href="{{ url_for('dashboard') }}" 
-               class="flex flex-col items-center gap-1 px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
+               class="flex flex-col items-center gap-1 px-2 md:px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
                 <i class="fas fa-home text-lg sm:text-xl"></i>
                 <span class="text-xs font-medium">Dashboard</span>
             </a>
 
             <!-- Accounts -->
             <a href="{{ url_for('view_accounts') }}" 
-               class="flex flex-col items-center gap-1 px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
+               class="flex flex-col items-center gap-1 px-2 md:px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
                 <i class="fas fa-list text-lg sm:text-xl"></i>
                 <span class="text-xs font-medium">Accounts</span>
             </a>
 
             <!-- Create Gmail Account (Main Action Button - Center) -->
             <a href="{{ url_for('create_gmail_earn') }}" 
-               class="flex flex-col items-center gap-1 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-lg hover:shadow-xl transition transform hover:scale-105 -mt-4 flex-1">
+               class="flex flex-col items-center gap-1 px-3 md:px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-lg hover:shadow-xl transition transform hover:scale-105 -mt-3 md:-mt-4 flex-1">
                 <i class="fas fa-plus text-lg sm:text-xl"></i>
                 <span class="text-xs font-bold">Create</span>
             </a>
 
             <!-- Referrals -->
             <a href="{{ url_for('referrals') }}" 
-               class="flex flex-col items-center gap-1 px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
+               class="flex flex-col items-center gap-1 px-2 md:px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
                 <i class="fas fa-gift text-lg sm:text-xl"></i>
                 <span class="text-xs font-medium">Refer</span>
             </a>
 
-            <!-- Profile -->
-            <a href="{{ url_for('dashboard') }}" 
-               class="flex flex-col items-center gap-1 px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
-                <i class="fas fa-user text-lg sm:text-xl"></i>
-                <span class="text-xs font-medium">Profile</span>
+            <!-- Withdrawals -->
+            <a href="{{ url_for('view_withdrawals') }}" 
+               class="flex flex-col items-center gap-1 px-2 md:px-3 py-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-gray-700 flex-1">
+                <i class="fas fa-money-bill-wave text-lg sm:text-xl"></i>
+                <span class="text-xs font-medium">Withdraw</span>
             </a>
         </div>
     </div>
     {% endif %}
+
+    <!-- Scripts -->
+    <script src="/static/js/notifications.js"></script>
+    <script>
+        // Hamburger Menu Toggle
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        if (hamburger) {
+            hamburger.addEventListener('click', function() {
+                this.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close menu when link is clicked
+            const menuLinks = mobileMenu.querySelectorAll('a');
+            menuLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    hamburger.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+        }
+
+        // Notification Dropdown Toggle
+        const notificationBtn = document.getElementById('notificationBtn');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+
+        if (notificationBtn) {
+            notificationBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                notificationDropdown.classList.toggle('active');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.relative.group:last-child')) {
+                    notificationDropdown.classList.remove('active');
+                }
+            });
+        }
+
+        // Fetch and display notifications
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications?limit=5');
+                const data = await response.json();
+
+                if (data.success) {
+                    const content = document.getElementById('notificationContent');
+                    
+                    if (data.notifications.length === 0) {
+                        content.innerHTML = `
+                            <div class="notification-empty">
+                                <i class="fas fa-bell-slash"></i>
+                                <p>No notifications</p>
+                            </div>
+                        `;
+                    } else {
+                        content.innerHTML = data.notifications.map(notif => `
+                            <div class="notification-item ${notif.is_read ? '' : 'unread'}" onclick="markAsRead('${notif.id}')">
+                                <div class="notification-item-title">${notif.title}</div>
+                                <div class="notification-item-message">${notif.message}</div>
+                                <div class="notification-item-time">${getTimeAgo(new Date(notif.created_at))}</div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        // Update unread count badge
+        async function updateNotificationBadge() {
+            try {
+                const response = await fetch('/api/notifications/unread-count');
+                const data = await response.json();
+
+                if (data.success) {
+                    const badge = document.getElementById('notificationBadge');
+                    if (data.unread_count > 0) {
+                        badge.textContent = data.unread_count;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating badge:', error);
+            }
+        }
+
+        // Mark notification as read
+        async function markAsRead(notificationId) {
+            try {
+                const response = await fetch(`/api/notifications/${notificationId}/read`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    loadNotifications();
+                    updateNotificationBadge();
+                }
+            } catch (error) {
+                console.error('Error marking as read:', error);
+            }
+        }
+
+        // Mark all as read
+        async function markAllAsRead() {
+            try {
+                const response = await fetch('/api/notifications/mark-all-read', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    loadNotifications();
+                    updateNotificationBadge();
+                }
+            } catch (error) {
+                console.error('Error marking all as read:', error);
+            }
+        }
+
+        // Format time ago
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " years ago";
+            
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " months ago";
+            
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " days ago";
+            
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " hours ago";
+            
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " minutes ago";
+            
+            return Math.floor(seconds) + " seconds ago";
+        }
+
+        // Request notification permission
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                if (Notification.permission === 'granted') {
+                    showBrowserNotification('✅ Notifications Enabled!', 'You will now receive notifications for approvals and withdrawals.');
+                    dismissNotificationBanner();
+                } else if (Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            showBrowserNotification('✅ Notifications Enabled!', 'You will now receive notifications for approvals and withdrawals.');
+                            dismissNotificationBanner();
+                            localStorage.setItem('notificationPermissionAsked', 'true');
+                        }
+                    });
+                }
+            }
+        }
+
+        // Dismiss notification banner
+        function dismissNotificationBanner() {
+            const banner = document.getElementById('notificationBanner');
+            if (banner) {
+                banner.style.display = 'none';
+                localStorage.setItem('notificationBannerDismissed', 'true');
+            }
+        }
+
+        // Show browser notification
+        function showBrowserNotification(title, message) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, {
+                    icon: 'https://cdn-icons-png.flaticon.com/512/732/732200.png',
+                    badge: 'https://cdn-icons-png.flaticon.com/512/732/732200.png',
+                    body: message,
+                    tag: 'gmail-earn-notification'
+                });
+            }
+        }
+
+        // Check if notification permission was previously denied
+        function checkNotificationPermission() {
+            const banner = document.getElementById('notificationBanner');
+            if (banner) {
+                const dismissed = localStorage.getItem('notificationBannerDismissed');
+                const permission = 'Notification' in window ? Notification.permission : 'default';
+
+                if (dismissed === 'true' || permission === 'granted' || permission === 'denied') {
+                    banner.style.display = 'none';
+                } else {
+                    banner.classList.add('active');
+                }
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if session.get('user_id') %}
+            loadNotifications();
+            updateNotificationBadge();
+            checkNotificationPermission();
+
+            // Reload notifications every 10 seconds
+            setInterval(function() {
+                loadNotifications();
+                updateNotificationBadge();
+            }, 10000);
+            {% endif %}
+        });
+    </script>
 </body>
 </html>
