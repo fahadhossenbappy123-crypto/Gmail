@@ -339,8 +339,8 @@ def import_gmail_from_sheets(spreadsheet_id=None, sheet_name='Sheet1', admin_use
         db.session.commit()
         return {
             'success': True,
-            'imported': imported_count,
-            'total': len(data_rows),
+            'imported_count': imported_count,
+            'total_rows': len(data_rows),
             'errors': errors
         }
     
@@ -1331,7 +1331,7 @@ def admin_export_to_sheets():
                 'password': account.password or '',
                 'user_email': user.email if user else ''
             }
-            result = save_gmail_to_google_sheet(gmail_payload)
+            result = save_gmail_to_google_sheet(gmail_payload, user_email=user.email if user else '')
             if result.get('success'):
                 uploaded += 1
             else:
