@@ -1260,9 +1260,14 @@ def admin_accounts():
                 'user_id': acc.user_id,
                 'name': username,
                 'username': username,
+                'email': acc.email,
+                'recovery_email': acc.recovery_email,
+                'password': acc.password,
                 'price': acc.price,
                 'status': acc.status,
-                'created_at': acc.created_at
+                'created_at': acc.created_at,
+                'approved_at': acc.approved_at,
+                'approved_by': acc.approved_by
             },
             'user_email': user.email if user else 'Unknown'
         })
